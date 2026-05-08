@@ -31,8 +31,36 @@ for file in documents.files:
             f"   v{version.version_number}: "
             f"{version.content}"
         )
-found = fs.find_directory(fs.root, "documents")
+university = fs.create_directory(
+    documents,
+    "university"
+)
+path_result = fs.get_directory_by_path(
+    "/root/documents/university"
+)
 
-if found:
-    print("\nDIRECTORIO ENCONTRADO:")
-    print(found.name)
+if path_result:
+    print("\nRUTA ENCONTRADA:")
+    print(path_result.name)
+    
+found_file = fs.find_file_by_name(
+    fs.root,
+    "tarea.txt"
+)
+
+if found_file:
+    print("\nARCHIVO ENCONTRADO:")
+    print(found_file.name)
+    
+file1.add_tag("universidad")
+file1.add_tag("proyecto")
+
+results = fs.search_by_tag(
+    fs.root,
+    "universidad"
+)
+
+print("\nRESULTADOS TAG:")
+
+for file in results:
+    print("-", file.name)

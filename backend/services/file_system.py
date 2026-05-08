@@ -42,4 +42,64 @@ class FileSystem:
                 return result
 
         return None
-    
+############################################################
+    def get_directory_by_path(self, path):
+
+        parts = path.strip("/").split("/")
+
+        if parts[0] != "root":
+            return None
+
+        current = self.root
+
+        for part in parts[1:]:
+
+            found = None
+
+            for subdirectory in current.subdirectories:
+
+                if subdirectory.name == part:
+                    found = subdirectory
+                    break
+
+            if not found:
+                return None
+
+            current = found
+
+        return current
+#########################################
+    def find_file_by_name(self, current_directory, file_name):
+
+        for file in current_directory.files:
+
+            if file.name == file_name:
+                return file
+
+        for subdirectory in current_directory.subdirectories:
+
+            result = self.find_file_by_name(
+                subdirectory,
+                file_name
+            )
+
+            if result:
+                return result
+
+        return None
+    ###########################
+    def search_by_tag(self, current_directory, tag):
+        results = []
+
+        for file in current_directory.files:
+
+            if tag in file.tags:
+                results.append(file)
+
+        for subdirectory in current_directory.subdirectories:
+
+            results.extend(
+                self.search_by_tag(subdirectory, tag)
+            )
+
+        return results

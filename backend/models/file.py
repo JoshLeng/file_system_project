@@ -13,3 +13,6 @@ class File:
         version_number = len(self.versions) + 1
         version = Version(version_number, content)
         self.versions.append(version)
+    def add_tag(self, tag):
+        if tag not in self.tags:
+            self.tags.append(tag)
