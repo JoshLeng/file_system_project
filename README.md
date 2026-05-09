@@ -4,14 +4,14 @@ Un gestor de archivos local basado en **FastAPI** que permite crear, organizar y
 
 ## 📋 Tabla de Contenidos
 
-- [Características](#Características)
-- [Arquitectura](#Arquitectura)
-- [Instalación](#Instalación)
-- [Uso](#Uso)
-- [Estructura del Proyecto](#Estructura-del-proyecto)
-- [API Endpoints](#Api-endpoints)
-- [Modelos de Datos](#Modelos-de-datos)
-- [Próximas Mejoras](#Próximas-mejoras)
+- [Características](#características)
+- [Arquitectura](#crquitectura)
+- [Instalación](#instalación)
+- [Uso](#uso)
+- [Estructura del Proyecto](#estructura-del-proyecto)
+- [API Endpoints](#api-endpoints)
+- [Modelos de Datos](#modelos-de-datos)
+- [Próximas Mejoras](#próximas-mejoras)
 
 ---
 
@@ -55,33 +55,6 @@ El proyecto sigue un patrón de **arquitectura en capas**:
 
 ---
 
-## 📦 Instalación
-
-### Requisitos
-- Python 3.8+
-- pip
-
-### Pasos
-
-```bash
-# Clonar el repositorio
-git clone https://github.com/JoshLeng/file_system_project.git
-cd file_system_project
-
-# Crear ambiente virtual
-python -m venv venv
-source venv/bin/activate  # En Windows: venv\Scripts\activate
-
-# Instalar dependencias
-pip install fastapi uvicorn
-
-# Ejecutar el servidor
-uvicorn backend.main:app --reload
-```
-
-El servidor estará disponible en `http://localhost:8000`
-
----
 
 ## �� Uso
 
@@ -306,17 +279,6 @@ Cliente                    API                FileSystem              Models
 
 ---
 
-## 🔍 Métodos del FileSystem
-
-| Método | Parámetros | Retorna | Descripción |
-|--------|-----------|---------|-------------|
-| `create_directory()` | `parent_dir: Directory, name: str` | `Directory` | Crea nueva carpeta |
-| `create_file()` | `directory: Directory, name: str` | `File` | Crea nuevo archivo |
-| `find_directory()` | `current_dir: Directory, name: str` | `Directory \| None` | Busca carpeta por nombre (recursivo) |
-| `get_directory_by_path()` | `path: str` | `Directory \| None` | Busca por ruta completa (ej: `/root/docs`) |
-| `find_file_by_name()` | `current_dir: Directory, name: str` | `File \| None` | Busca archivo recursivamente |
-| `search_by_tag()` | `current_dir: Directory, tag: str` | `List[File]` | Busca archivos con etiqueta específica |
-
 ---
 
 ## 🎯 Estado Actual
@@ -331,19 +293,18 @@ Cliente                    API                FileSystem              Models
 - Versionado de archivos
 
 ### 🔄 En Progreso
-- Validación de datos con Pydantic
-- Manejo de errores robusto
-- Tests unitarios
+-SISTEMA DE ETIQUETAS
+- BUSQUEDA AVANZADA
+- UNIFICACIÓN CON FRONTEND
 
 ### 🔜 Próximas Mejoras
 - **Persistencia en BD:** Guardar en SQLite, PostgreSQL o MongoDB
 - **Autenticación:** Sistema de usuarios y permisos
 - **Compartición:** Generar y gestionar links de compartición
-- **Interfaz Frontend:** Web UI con React/Vue
-- **Búsqueda avanzada:** Filtros por tipo, tamaño, fecha
+- **Interfaz Frontend:** Web HTML, CSS, JS.
+- **Búsqueda avanzada:** Filtros por nombre, etiquetas
 - **Operaciones en lote:** Mover/copiar/eliminar múltiples archivos
-- **Compresión:** Crear ZIPs automáticos
-- **Integración con almacenamiento:** AWS S3, Google Cloud Storage
+
 
 ---
 
@@ -379,67 +340,14 @@ resultados = fs.search_by_tag(fs.root, "importante")
 
 ---
 
-## 🛠️ Recomendaciones Técnicas
 
-### 1. Validación de Datos
-Usar **Pydantic** para validar requests:
-
-```python
-from pydantic import BaseModel
-
-class DirectoryCreate(BaseModel):
-    parent: str
-    name: str
-
-class FileCreate(BaseModel):
-    directory: str
-    name: str
-```
-
-### 2. Manejo de Errores
-Usar excepciones HTTP de FastAPI:
-
-```python
-from fastapi import HTTPException
-
-if not parent_directory:
-    raise HTTPException(status_code=404, detail="Parent directory not found")
-```
-
-### 3. Persistencia
-Implementar guardado en base de datos para que los datos persistan entre sesiones.
-
-### 4. Tests
-Crear tests unitarios:
-
-```python
-def test_create_directory():
-    fs = FileSystem()
-    doc = fs.create_directory(fs.root, "docs")
-    assert doc.name == "docs"
-```
+Este proyecto está bajo licencia de FLIE DRIVE^tm
 
 ---
 
-## 📝 Contribuir
-
-Las contribuciones son bienvenidas. Por favor:
-
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
-
----
-
-## 📄 Licencia
-
-Este proyecto está bajo licencia MIT.
-
----
-
-## 👤 Autor
+## 👤 Autores
+-kevin Xulú
+-Josue Godínez
 
 **JoshLeng** - [@JoshLeng](https://github.com/JoshLeng)
 
