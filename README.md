@@ -1,17 +1,17 @@
-# 📁 File System Project - Gestor de Archivos Local (Web)
+# 📁 FLIEDRIVE - Gestor de Archivos Local (Web)
 
 Un gestor de archivos local basado en **FastAPI** que permite crear, organizar y gestionar archivos y carpetas con soporte para versionado y búsqueda por etiquetas.
 
 ## 📋 Tabla de Contenidos
 
-- [Características](#características)
-- [Arquitectura](#arquitectura)
-- [Instalación](#instalación)
-- [Uso](#uso)
-- [Estructura del Proyecto](#estructura-del-proyecto)
-- [API Endpoints](#api-endpoints)
-- [Modelos de Datos](#modelos-de-datos)
-- [Próximas Mejoras](#próximas-mejoras)
+- [Características](#Características)
+- [Arquitectura](#Arquitectura)
+- [Instalación](#Instalación)
+- [Uso](#Uso)
+- [Estructura del Proyecto](#Estructura-del-proyecto)
+- [API Endpoints](#Api-endpoints)
+- [Modelos de Datos](#Modelos-de-datos)
+- [Próximas Mejoras](#Próximas-mejoras)
 
 ---
 
