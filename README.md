@@ -15,7 +15,7 @@ Un gestor de archivos local basado en **FastAPI** que permite crear, organizar y
 
 ---
 
-## ✨ Características
+## Características
 
 - ✅ Crear carpetas y archivos jerárquicamente
 - ✅ Listar contenido de directorios
@@ -28,7 +28,7 @@ Un gestor de archivos local basado en **FastAPI** que permite crear, organizar y
 
 ---
 
-## 🏗️ Arquitectura
+##  Estructura
 
 El proyecto sigue un patrón de **arquitectura en capas**:
 
@@ -56,7 +56,7 @@ El proyecto sigue un patrón de **arquitectura en capas**:
 ---
 
 
-## �� Uso
+##  Uso
 
 ### Iniciar el servidor
 
@@ -257,7 +257,7 @@ class Version:
 
 ---
 
-## 🔄 Flujo de Datos
+##  Flujo de Datos
 
 ### Crear un Archivo
 
@@ -281,7 +281,7 @@ Cliente                    API                FileSystem              Models
 
 ---
 
-## 🎯 Estado Actual
+##  Estado Actual
 
 ### ✅ Completado
 - Estructura base del backend
@@ -308,7 +308,7 @@ Cliente                    API                FileSystem              Models
 
 ---
 
-## 💡 Ejemplo de Uso Completo
+##  Ejemplo de Uso Completo
 
 ```python
 # 1. El sistema se inicializa automáticamente
