@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Directorio</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body>
+
+    <div class="app-layout">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+
+            <div>
+
+                <div class="brand">
+
+                    <div class="brand-icon">
+                        <i class="fa-solid fa-layer-group"></i>
+                    </div>
+
+                    <div>
+                        <h2>FLIE DRIVE</h2>
+                        <p>Gestionar es fácil</p>
+                    </div>
+
+                </div>
+
+                <button class="create-btn">
+                    <i class="fa-solid fa-plus"></i>
+                    Crear nuevo directorio
+                </button>
+
+                <nav class="menu">
+
+                    <a href="#" class="active">
+                        <i class="fa-solid fa-table-columns"></i>
+                        Tablero
+                    </a>
+
+                    <a href="#">
+                        <i class="fa-regular fa-folder-open"></i>
+                        Mis carpetas
+                    </a>
+
+                    <a href="#">
+                        <i class="fa-solid fa-users"></i>
+                        Compartidos
+                    </a>
+
+                    <a href="#">
+                        <i class="fa-regular fa-star"></i>
+                        Favoritos
+                    </a>
+
+                   
+                </nav>
+
+            </div>
+
+            <div class="storage-card">
+
+                <div class="storage-top">
+                    <h3>Espacio usado</h3>
+                    <span>1%</span>
+                </div>
+
+                <div class="storage-bar">
+                    <div class="storage-fill"></div>
+                </div>
+
+                <p>0.1 GB de 10 GB utilizados</p>
+
+            </div>
+
+        </aside>
+
+        <!-- MAIN -->
+        <main class="main-content">
+
+            <!-- TOPBAR -->
+            <header class="topbar">
+
+                <div>
+                    <h1>Bienvenido </h1>
+                    <p>Gestiona todos tus archivos</p>
+                </div>
+
+                <div class="top-actions">
+
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+
+                        <input type="text"
+                            placeholder="Buscar archivos...">
+                    </div>
+
+                    <button class="notification-btn">
+                        <i class="fa-regular fa-bell"></i>
+                    </button>
+
+                    <div class="profile">
+                        <img src="https://i.pravatar.cc/100" alt="">
+                    </div>
+
+                </div>
+
+            </header>
+
+            <!-- STATS -->
+            <section class="stats-grid">
+
+                <div class="stat-card blue-card">
+                    <div>
+                        <p>Archivos</p>
+                        <h2>1</h2>
+                    </div>
+
+                    <i class="fa-regular fa-file"></i>
+                </div>
+
+                <div class="stat-card dark-card">
+                    <div>
+                        <p>Proyectos</p>
+                        <h2>1</h2>
+                    </div>
+
+                    <i class="fa-solid fa-briefcase"></i>
+                </div>
+
+                <div class="stat-card purple-card">
+                    <div>
+                        <p>Compartidos</p>
+                        <h2>2</h2>
+                    </div>
+
+                    <i class="fa-solid fa-share-nodes"></i>
+                </div>
+
+            </section>
+
+            <!-- TABLA -->
+            <section class="table-section">
+
+                <div class="section-header">
+
+                    <h2>Últimos archivos</h2>
+
+                    <button class="upload-btn">
+                        <i class="fa-solid fa-upload"></i>
+                        Subir archivo
+                    </button>
+
+                </div>
+
+                <table>
+
+                    <thead>
+                        <tr>
+                            <th>Archivo</th>
+                            <th>Tipo</th>
+                            <th>Fecha</th>
+                            <th>Tamaño</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="table-body"></tbody>
+
+                </table>
+
+            </section>
+
+        </main>
+
+    </div>
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>

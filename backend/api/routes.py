@@ -77,3 +77,36 @@ def get_files(path: str):
         files.append(file.name)
 
     return files
+####################################3
+@router.get("/search/file")
+def search_file(name: str):
+
+    file = fs.find_file_by_name(
+        fs.root,
+        name
+    )
+
+    if not file:
+        return {
+            "error": "File not found"
+        }
+
+    return {
+        "file": file.name,
+        "tags": file.tags
+    }
+    
+@router.get("/search/tag")
+def search_tag(tag: str):
+
+    results = fs.search_by_tag(
+        fs.root,
+        tag
+    )
+
+    response = []
+
+    for file in results:
+        response.append(file.name)
+
+    return response
