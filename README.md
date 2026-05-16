@@ -1,11 +1,12 @@
 # 📁 FLIEDRIVE - Gestor de Archivos Local (Web)
 
-Un gestor de archivos local basado en **FastAPI** que permite crear, organizar y gestionar archivos y carpetas con soporte para versionado y búsqueda por etiquetas.
+Un gestor de archivos local basado en **FastAPI** que permite crear, organizar y gestionar archivos y carpetas con soporte para versionado y búsqueda por etiquetas. **Ahora con interfaz web integrada (HTML, CSS, JavaScript)**.
 
 ## 📋 Tabla de Contenidos
 
 - [Características](#características)
-- [Arquitectura](#crquitectura)
+- [Novedades - Mayo 2026](#novedades---mayo-2026)
+- [Arquitectura](#arquitectura)
 - [Instalación](#instalación)
 - [Uso](#uso)
 - [Estructura del Proyecto](#estructura-del-proyecto)
@@ -15,7 +16,7 @@ Un gestor de archivos local basado en **FastAPI** que permite crear, organizar y
 
 ---
 
-## Características
+## 🎯 Características
 
 - ✅ Crear carpetas y archivos jerárquicamente
 - ✅ Listar contenido de directorios
@@ -23,40 +24,92 @@ Un gestor de archivos local basado en **FastAPI** que permite crear, organizar y
 - ✅ Sistema de etiquetas para búsqueda
 - ✅ Búsqueda recursiva de archivos y carpetas
 - ✅ API REST con FastAPI
+- ✅ **Interfaz Web (Frontend integrado)** - HTML, CSS, JavaScript
+- ✅ **Búsqueda Avanzada** - Filtros por nombre y etiquetas
 - 🔜 Compartir archivos con links
 - 🔜 Persistencia en base de datos
 
 ---
 
-##  Estructura
+## 🆕 Novedades - Mayo 2026
+
+### ✨ Últimos Cambios (15/05/2026)
+
+#### Backend
+- ✅ **Unificación completada:** Se han integrado todos los cambios finales antes de la unificación con Frontend
+- ✅ **Sistema de etiquetas mejorado:** Funcionamiento optimizado y búsqueda por tags
+- ✅ **Búsqueda avanzada:** Implementada con filtros dinámicos
+- ✅ **Endpoints API finalizados:** Todos los endpoints REST están funcionales y documentados
+
+#### Frontend  
+- ✅ **Interfaz web completa:** Interfaz HTML, CSS y JavaScript integrada
+- ✅ **Comunicación con API:** Integración exitosa entre Frontend y Backend
+- ✅ **Búsqueda avanzada en UI:** Interfaz visual para búsqueda y filtrado
+- ✅ **Gestión visual de archivos:** Visualización y manipulación de estructura de directorios
+- ✅ **Sistema de etiquetas visual:** Interfaz para agregar y filtrar etiquetas
+
+#### Composición del Proyecto
+- 🎨 CSS: 37.5%
+- 🐍 Python: 36%
+- 📄 HTML: 20.9%
+- ✨ JavaScript: 5.6%
+
+---
+
+## 🏗️ Arquitectura
 
 El proyecto sigue un patrón de **arquitectura en capas**:
 
 ```
-┌─────────────────────────────────────┐
-│       HTTP Client / Frontend        │
-└────────────────┬────────────────────┘
+┌──────────────────────────────────────┐
+│    HTTP Client / Frontend (Web)      │
+│  (HTML, CSS, JavaScript)             │
+└────────────────┬─────────────────────┘
                  │
-┌─────────────────▼────────────────────┐
-│   FastAPI Router (API Endpoints)     │
-│      backend/api/routes.py           │
-└─────────────────┬────────────────────┘
+┌────────────────▼──────────────────────┐
+│   FastAPI Router (API Endpoints)      │
+│      backend/api/routes.py            │
+└────────────────┬──────────────────────┘
                  │
-┌─────────────────▼────────────────────┐
-│   FileSystem Service (Lógica)        │
-│   backend/services/file_system.py    │
-└─────────────────┬────────────────────┘
+┌────────────────▼──────────────────────┐
+│   FileSystem Service (Lógica)         │
+│   backend/services/file_system.py     │
+└────────────────┬──────────────────────┘
                  │
-┌─────────────────▼────────────────────┐
-│   Data Models (Estructura de datos)  │
-│   backend/models/{directory,file}    │
-└─────────────────────────────────────┘
+┌────────────────▼──────────────────────┐
+│  Data Models (Estructura de datos)    │
+│  backend/models/{directory,file}      │
+└──────────────────────────────────────┘
 ```
 
 ---
 
+## 📦 Instalación
 
-##  Uso
+### Requisitos Previos
+- Python 3.8+
+- pip
+
+### Pasos de Instalación
+
+```bash
+# 1. Clonar el repositorio
+git clone https://github.com/JoshLeng/file_system_project.git
+cd file_system_project
+
+# 2. Instalar dependencias
+pip install -r requirements.txt
+
+# 3. Iniciar el servidor FastAPI
+uvicorn backend.main:app --reload
+
+# 4. Acceder a la interfaz web
+# Abrir en navegador: http://localhost:8000
+```
+
+---
+
+## 💻 Uso
 
 ### Iniciar el servidor
 
@@ -64,7 +117,16 @@ El proyecto sigue un patrón de **arquitectura en capas**:
 uvicorn backend.main:app --reload
 ```
 
-### Probar endpoints
+El servidor estará disponible en `http://localhost:8000`
+
+### Interfaz Web
+
+Una vez que el servidor está corriendo, accede a:
+- **Frontend:** http://localhost:8000/ (Interfaz visual completa)
+- **API Docs:** http://localhost:8000/docs (Documentación interactiva)
+- **OpenAPI Schema:** http://localhost:8000/openapi.json
+
+### Probar endpoints mediante CLI
 
 #### 1. Health Check
 ```bash
@@ -103,6 +165,11 @@ curl -X POST http://localhost:8000/file \
 curl http://localhost:8000/files?path=/root/documents
 ```
 
+#### 6. Buscar por etiquetas
+```bash
+curl http://localhost:8000/search?tag=importante&path=/root
+```
+
 ---
 
 ## 📁 Estructura del Proyecto
@@ -124,8 +191,13 @@ file_system_project/
 │       ├── __init__.py
 │       ├── file_system.py         # Lógica principal
 │       └── system_instance.py     # Instancia global
+├── frontend/
+│   ├── index.html                 # Interfaz principal
+│   ├── styles.css                 # Estilos de la UI
+│   ├── script.js                  # Lógica del Frontend
+│   └── assets/                    # Recursos estáticos
 ├── README.md                      # Este archivo
-└── requirements.txt               # Dependencias
+└── requirements.txt               # Dependencias Python
 ```
 
 ---
@@ -133,7 +205,7 @@ file_system_project/
 ## 🔌 API Endpoints
 
 ### 1. **GET `/` - Health Check**
-Verifica que el servidor esté funcionando.
+Verifica que el servidor esté funcionando y sirve la interfaz web.
 
 **Respuesta:**
 ```json
@@ -211,6 +283,20 @@ Obtiene todos los archivos dentro de un directorio específico.
 
 ---
 
+### 6. **GET `/search?tag=...&path=...` - Búsqueda Avanzada**
+Busca archivos por etiquetas en una ruta específica.
+
+**Query Parameters:**
+- `tag` (required): Etiqueta a buscar
+- `path` (optional): Ruta donde buscar (por defecto `/root`)
+
+**Respuesta:**
+```json
+["archivo1.txt", "archivo2.txt"]
+```
+
+---
+
 ## 📊 Modelos de Datos
 
 ### **Directory (Directorio)**
@@ -239,8 +325,9 @@ class File:
 **Métodos:**
 - `add_version(content)`: Agrega una nueva versión
 - `add_tag(tag)`: Agrega una etiqueta
+- `get_versions()`: Obtiene el historial de versiones
 
-**Propósito:** Representa un archivo lógico con capacidad de versionado.
+**Propósito:** Representa un archivo lógico con capacidad de versionado y búsqueda por etiquetas.
 
 ---
 
@@ -257,7 +344,7 @@ class Version:
 
 ---
 
-##  Flujo de Datos
+## 📊 Flujo de Datos
 
 ### Crear un Archivo
 
@@ -279,36 +366,39 @@ Cliente                    API                FileSystem              Models
 
 ---
 
----
-
-##  Estado Actual
+## ✅ Estado del Proyecto
 
 ### ✅ Completado
-- Estructura base del backend
-- Modelos de datos (Directory, File, Version)
-- Lógica principal del FileSystem
-- Endpoints API básicos
-- Sistema de búsqueda recursiva
-- Sistema de etiquetas
-- Versionado de archivos
+- ✅ Estructura base del backend (Python + FastAPI)
+- ✅ Modelos de datos (Directory, File, Version)
+- ✅ Lógica principal del FileSystem
+- ✅ Endpoints API REST básicos y avanzados
+- ✅ Sistema de búsqueda recursiva
+- ✅ Sistema de etiquetas funcional
+- ✅ Versionado de archivos
+- ✅ **Interfaz Frontend (HTML, CSS, JavaScript)**
+- ✅ **Integración Frontend-Backend**
+- ✅ **Búsqueda Avanzada en UI**
 
 ### 🔄 En Progreso
--SISTEMA DE ETIQUETAS
-- BUSQUEDA AVANZADA
-- UNIFICACIÓN CON FRONTEND
+- Optimización de rendimiento
+- Validación de entrada mejorada
+- Tests unitarios
 
 ### 🔜 Próximas Mejoras
-- **Persistencia en BD:** Guardar en SQLite, PostgreSQL o MongoDB
+- **Persistencia en BD:** SQLite, PostgreSQL o MongoDB
 - **Autenticación:** Sistema de usuarios y permisos
 - **Compartición:** Generar y gestionar links de compartición
-- **Interfaz Frontend:** Web HTML, CSS, JS.
-- **Búsqueda avanzada:** Filtros por nombre, etiquetas
 - **Operaciones en lote:** Mover/copiar/eliminar múltiples archivos
-
+- **Sincronización en tiempo real:** WebSockets para actualizaciones en vivo
+- **Exportación de datos:** Descarga de archivos y directorios
+- **Temas personalizables:** Modo oscuro/claro en el frontend
 
 ---
 
-##  Ejemplo de Uso Completo
+## 🔧 Ejemplo de Uso Completo
+
+### Con Python
 
 ```python
 # 1. El sistema se inicializa automáticamente
@@ -331,26 +421,59 @@ new_file.add_version("Contenido actualizado")
 
 # 5. Agregar etiquetas
 new_file.add_tag("importante")
-new_file.add_tag("2024")
+new_file.add_tag("2026")
 
 # 6. Buscar por etiqueta
 resultados = fs.search_by_tag(fs.root, "importante")
 # Retorna: [new_file]
 ```
 
----
+### Con la Interfaz Web
 
-
-Este proyecto está bajo licencia de FLIE DRIVE^tm
-
----
-
-## 👤 Autores
--kevin Xulú
--Josue Godínez
-
-**JoshLeng** - [@JoshLeng](https://github.com/JoshLeng)
+1. Abre `http://localhost:8000` en tu navegador
+2. Usa la interfaz visual para:
+   - Crear nuevas carpetas y archivos
+   - Navegar por la estructura de directorios
+   - Agregar etiquetas a archivos
+   - Buscar archivos por nombre o etiqueta
+   - Ver el historial de versiones
 
 ---
 
-**Última actualización:** 2026-05-09
+## 📝 Licencia
+
+Este proyecto está bajo licencia de **FLIE DRIVE™**
+
+---
+
+## 👥 Autores
+
+- **Kevin Xulú** - Desarrollo Backend
+- **Josué Godínez** - Desarrollo Backend
+- **JoshLeng** ([@JoshLeng](https://github.com/JoshLeng)) - Coordinación y Frontend
+
+---
+
+## 📅 Historial de Cambios
+
+| Fecha | Versión | Cambio |
+|-------|---------|--------|
+| 2026-05-15 | 2.0 | ✨ Unificación completada: Frontend integrado con Backend |
+| 2026-05-09 | 1.5 | 🎨 Mejora de estructura y documentación |
+| 2026-05-08 | 1.0 | 🚀 Lanzamiento inicial con API REST |
+
+---
+
+**Última actualización:** 2026-05-16
+
+---
+
+## 🤝 Contribuciones
+
+Las contribuciones son bienvenidas. Para cambios mayores, abre un issue primero para discutir los cambios propuestos.
+
+---
+
+## ❓ Soporte
+
+Si encuentras problemas o tienes preguntas, abre un [issue en GitHub](https://github.com/JoshLeng/file_system_project/issues).
