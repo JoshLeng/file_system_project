@@ -2,7 +2,7 @@
 
 Un gestor de archivos local basado en **FastAPI** que permite crear, organizar y gestionar archivos y carpetas con soporte para versionado y búsqueda por etiquetas. **Ahora con interfaz web integrada (HTML, CSS, JavaScript)**.
 
-## 📋 Tabla de Contenidos
+##  Tabla de Contenidos
 
 - [Características](#características)
 - [Novedades - Mayo 2026](#novedades---mayo-2026)
@@ -16,7 +16,7 @@ Un gestor de archivos local basado en **FastAPI** que permite crear, organizar y
 
 ---
 
-## 🎯 Características
+##  Características
 
 - ✅ Crear carpetas y archivos jerárquicamente
 - ✅ Listar contenido de directorios
@@ -31,9 +31,9 @@ Un gestor de archivos local basado en **FastAPI** que permite crear, organizar y
 
 ---
 
-## 🆕 Novedades - Mayo 2026
+##  Novedades - Mayo 2026
 
-### ✨ Últimos Cambios (15/05/2026)
+###  Últimos Cambios (15/05/2026)
 
 #### Backend
 - ✅ **Unificación completada:** Se han integrado todos los cambios finales antes de la unificación con Frontend
@@ -49,14 +49,14 @@ Un gestor de archivos local basado en **FastAPI** que permite crear, organizar y
 - ✅ **Sistema de etiquetas visual:** Interfaz para agregar y filtrar etiquetas
 
 #### Composición del Proyecto
-- 🎨 CSS: 37.5%
-- 🐍 Python: 36%
-- 📄 HTML: 20.9%
-- ✨ JavaScript: 5.6%
+-  CSS: 37.5%
+-  Python: 36%
+-  HTML: 20.9%
+-  JavaScript: 5.6%
 
 ---
 
-## 🏗️ Arquitectura
+##  Arquitectura
 
 El proyecto sigue un patrón de **arquitectura en capas**:
 
@@ -109,7 +109,7 @@ uvicorn backend.main:app --reload
 
 ---
 
-## 💻 Uso
+##  Uso
 
 ### Iniciar el servidor
 
@@ -458,9 +458,9 @@ Este proyecto está bajo licencia de **FLIE DRIVE™**
 
 | Fecha | Versión | Cambio |
 |-------|---------|--------|
-| 2026-05-15 | 2.0 | ✨ Unificación completada: Frontend integrado con Backend |
-| 2026-05-09 | 1.5 | 🎨 Mejora de estructura y documentación |
-| 2026-05-08 | 1.0 | 🚀 Lanzamiento inicial con API REST |
+| 2026-05-15 | 2.0 |  Unificación completada: Frontend integrado con Backend |
+| 2026-05-09 | 1.5 |  Mejora de estructura y documentación |
+| 2026-05-08 | 1.0 |  Lanzamiento inicial con API REST |
 
 ---
 
@@ -468,12 +468,6 @@ Este proyecto está bajo licencia de **FLIE DRIVE™**
 
 ---
 
-## 🤝 Contribuciones
 
-Las contribuciones son bienvenidas. Para cambios mayores, abre un issue primero para discutir los cambios propuestos.
 
 ---
-
-## ❓ Soporte
-
-Si encuentras problemas o tienes preguntas, abre un [issue en GitHub](https://github.com/JoshLeng/file_system_project/issues).
