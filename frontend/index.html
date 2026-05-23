@@ -2,14 +2,26 @@
 <html lang="es">
 
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Directorio</title>
 
-    <link rel="stylesheet" href="style.css">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <title>File Drive</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    >
+
 </head>
 
 <body>
@@ -17,160 +29,305 @@
     <div class="app-layout">
 
         <!-- SIDEBAR -->
+
         <aside class="sidebar">
 
             <div>
 
+                <!-- BRAND -->
+
                 <div class="brand">
 
                     <div class="brand-icon">
+
                         <i class="fa-solid fa-layer-group"></i>
+
                     </div>
 
                     <div>
-                        <h2>FLIE DRIVE</h2>
-                        <p>Gestionar es fácil</p>
+
+                        <h2>FILE DRIVE</h2>
+
+                        <p>
+                            Gestión de archivos local
+                        </p>
+
                     </div>
 
                 </div>
 
-                <button class="create-btn">
+                <!-- CREATE DIRECTORY -->
+
+                <button
+                    class="create-btn"
+                    id="new-folder-btn"
+                >
+
                     <i class="fa-solid fa-plus"></i>
-                    Crear nuevo directorio
+
+                    Crear directorio
+
                 </button>
+
+                <!-- MENU -->
 
                 <nav class="menu">
 
-                    <a href="#" class="active">
+                    <a
+                        href="#"
+                        class="active"
+                        id="dashboard-view-btn"
+                    >
+
                         <i class="fa-solid fa-table-columns"></i>
+
                         Tablero
+
                     </a>
 
-                    <a href="#">
+                    <a
+                        href="#"
+                        id="directories-view-btn"
+                    >
+
                         <i class="fa-regular fa-folder-open"></i>
-                        Mis carpetas
+
+                        Directorios
+
                     </a>
 
                     <a href="#">
+
                         <i class="fa-solid fa-users"></i>
+
                         Compartidos
+
                     </a>
 
-                    <a href="#">
-                        <i class="fa-regular fa-star"></i>
-                        Favoritos
-                    </a>
-
-                   
                 </nav>
 
+                <!-- DIRECTORY TREE -->
+
+                <div id="directory-tree"></div>
+
             </div>
+
+            <!-- STORAGE -->
 
             <div class="storage-card">
 
                 <div class="storage-top">
+
                     <h3>Espacio usado</h3>
-                    <span>1%</span>
+
+                    <span id="storage-percent">
+                        0%
+                    </span>
+
                 </div>
 
                 <div class="storage-bar">
-                    <div class="storage-fill"></div>
+
+                    <div
+                        class="storage-fill"
+                        id="storage-fill"
+                    ></div>
+
                 </div>
 
-                <p>0.1 GB de 10 GB utilizados</p>
+                <p id="storage-text">
+                    0 GB de 10 GB utilizados
+                </p>
 
             </div>
 
         </aside>
 
         <!-- MAIN -->
+
         <main class="main-content">
 
             <!-- TOPBAR -->
+
             <header class="topbar">
 
                 <div>
-                    <h1>Bienvenido </h1>
-                    <p>Gestiona todos tus archivos</p>
+
+                    <h1>Bienvenido</h1>
+
+                    <p>
+                        Gestiona todos tus archivos
+                    </p>
+
                 </div>
 
                 <div class="top-actions">
 
+                    <!-- SEARCH -->
+
                     <div class="search-box">
+
                         <i class="fa-solid fa-magnifying-glass"></i>
 
-                        <input type="text"
-                            placeholder="Buscar archivos...">
+                        <input
+                            type="text"
+                            placeholder="Buscar archivos o tags..."
+                        >
+
                     </div>
+
+                    <!-- NOTIFICATIONS -->
 
                     <button class="notification-btn">
-                        <i class="fa-regular fa-bell"></i>
-                    </button>
 
-                    <div class="profile">
-                        <img src="https://i.pravatar.cc/100" alt="">
-                    </div>
+                        <i class="fa-regular fa-bell"></i>
+
+                    </button>
 
                 </div>
 
             </header>
 
             <!-- STATS -->
+
             <section class="stats-grid">
 
-                <div class="stat-card blue-card">
+                <!-- FILES -->
+
+                <div
+                    class="stat-card blue-card"
+                    id="files-card"
+                >
+
                     <div>
+
                         <p>Archivos</p>
-                        <h2>1</h2>
+
+                        <h2 id="files-count">
+                            0
+                        </h2>
+
                     </div>
 
                     <i class="fa-regular fa-file"></i>
+
                 </div>
 
-                <div class="stat-card dark-card">
+                <!-- DIRECTORIES -->
+
+                <div
+                    class="stat-card dark-card"
+                    id="directories-card"
+                >
+
                     <div>
-                        <p>Proyectos</p>
-                        <h2>1</h2>
+
+                        <p>Directorios</p>
+
+                        <h2 id="directories-count">
+                            0
+                        </h2>
+
                     </div>
 
-                    <i class="fa-solid fa-briefcase"></i>
+                    <i class="fa-regular fa-folder"></i>
+
                 </div>
 
+                <!-- SHARED -->
+
                 <div class="stat-card purple-card">
+
                     <div>
+
                         <p>Compartidos</p>
-                        <h2>2</h2>
+
+                        <h2 id="shared-files">
+                            0
+                        </h2>
+
                     </div>
 
                     <i class="fa-solid fa-share-nodes"></i>
+
                 </div>
 
             </section>
 
-            <!-- TABLA -->
+            <!-- TABLE SECTION -->
+
             <section class="table-section">
+
+                <!-- BREADCRUMBS -->
+
+                <div id="breadcrumbs"></div>
+
+                <!-- HEADER -->
 
                 <div class="section-header">
 
-                    <h2>Últimos archivos</h2>
+                    <h2>
+                        Explorador de archivos
+                    </h2>
 
-                    <button class="upload-btn">
-                        <i class="fa-solid fa-upload"></i>
-                        Subir archivo
-                    </button>
+                    <div class="header-actions">
+
+                        <!-- UPLOAD -->
+
+                        <label
+                            class="upload-btn"
+                            for="file-input"
+                        >
+
+                            <i class="fa-solid fa-upload"></i>
+
+                            Subir archivo
+
+                        </label>
+
+                        <input
+                            type="file"
+                            id="file-input"
+                            hidden
+                        >
+
+                        <!-- CREATE FILE -->
+
+                        <button
+                            class="upload-btn"
+                            id="create-file-btn"
+                        >
+
+                            <i class="fa-solid fa-file-circle-plus"></i>
+
+                            Crear archivo
+
+                        </button>
+
+                    </div>
 
                 </div>
+
+                <!-- TABLE -->
 
                 <table>
 
                     <thead>
+
                         <tr>
+
                             <th>Archivo</th>
+
                             <th>Tipo</th>
+
                             <th>Fecha</th>
+
                             <th>Tamaño</th>
-                            <th></th>
+
+                            <th>Acciones</th>
+
                         </tr>
+
                     </thead>
 
                     <tbody id="table-body"></tbody>
@@ -183,7 +340,7 @@
 
     </div>
 
-    <script src="script.js"></script>
+    <script src="main.js"></script>
 
 </body>
 
