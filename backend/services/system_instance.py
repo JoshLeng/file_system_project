@@ -1,7 +1,11 @@
 from backend.services.file_system import FileSystem
+from backend.models.trash import TrashSystem
 
 
-fs = FileSystem()  
+fs = FileSystem()
+
+trash = TrashSystem()
+
 documents = fs.create_directory(
     fs.root,
     "documents"
