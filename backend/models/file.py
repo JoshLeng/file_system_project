@@ -1,3 +1,6 @@
+from datetime import datetime
+
+
 class File:
 
     def __init__(
@@ -5,7 +8,8 @@ class File:
         name,
         real_path="",
         size=0,
-        tags=None
+        tags=None,
+        uploaded_at=None
     ):
 
         self.name = name
@@ -15,6 +19,8 @@ class File:
         self.size = size
 
         self.tags = tags if tags else []
+
+        self.uploaded_at = uploaded_at or datetime.now().isoformat()
 
     ####################################################
 
@@ -54,5 +60,7 @@ class File:
 
             "size": self.size,
 
-            "tags": self.tags
+            "tags": self.tags,
+
+            "uploaded_at": self.uploaded_at
         }

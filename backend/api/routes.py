@@ -1,4 +1,4 @@
-from backend.services.system_instance import fs
+from backend.services.system_instance import fs, trash
 from backend.models.file import File as FileModel
 
 import os
@@ -194,7 +194,13 @@ def get_directory_content(path: str):
 
             "name": subdirectory.name,
 
-            "path": subdirectory.path
+            "path": subdirectory.path,
+
+            "created_at": subdirectory.created_at,
+
+            "updated_at": subdirectory.updated_at,
+
+            "size": subdirectory.get_total_size()
         })
 
     ###################################################
@@ -211,7 +217,9 @@ def get_directory_content(path: str):
 
             "real_path": file.real_path,
 
-            "tags": file.tags
+            "tags": file.tags,
+
+            "uploaded_at": file.uploaded_at
         })
 
     ###################################################
@@ -243,6 +251,14 @@ def delete_file(path: str, name: str):
         name
     )
 
+    if deleted:
+
+        trash.add(
+            name,
+            "file",
+            f"{path}/{name}"
+        )
+
     return {
         "success": deleted
     }
@@ -270,6 +286,14 @@ def delete_directory(
         parent_directory,
         name
     )
+
+    if deleted:
+
+        trash.add(
+            name,
+            "directory",
+            f"{path}/{name}"
+        )
 
     return {
         "success": deleted
@@ -341,6 +365,42 @@ def rename_file(data: dict):
 
     return {
         "success": renamed
+    }
+
+#######################################################
+# UPDATE FILE TAGS
+#######################################################
+
+@router.put("/file/tags")
+def update_file_tags(data: dict):
+
+    path = data["path"]
+
+    file_name = data["file_name"]
+
+    tags = data.get("tags", [])
+
+    directory = fs.get_directory_by_path(path)
+
+    if not directory:
+
+        return {
+            "error": "Directory not found"
+        }
+
+    for file in directory.files:
+
+        if file.name == file_name:
+
+            file.set_tags(tags)
+
+            return {
+                "success": True,
+                "message": "Tags updated successfully"
+            }
+
+    return {
+        "error": "File not found"
     }
 
 #######################################################
@@ -561,4 +621,60 @@ def get_stats():
 
         "max_gb":
             10
+    }
+
+#######################################################
+# TRASH
+#######################################################
+
+@router.get("/trash")
+def get_trash():
+
+    items = trash.get_all()
+
+    return {
+        "items": [
+            item.to_dict()
+            for item in items
+        ],
+        "count": len(items)
+    }
+
+#######################################################
+
+@router.put("/trash/restore")
+def restore_from_trash(data: dict):
+
+    name = data["name"]
+
+    item = trash.restore(name)
+
+    if item:
+
+        return {
+            "success": True,
+            "message": f"Item '{name}' restored",
+            "item": item.to_dict()
+        }
+
+    return {
+        "error": "Item not found in trash"
+    }
+
+#######################################################
+
+@router.delete("/trash/permanent")
+def delete_permanent(name: str):
+
+    deleted = trash.delete_permanent(name)
+
+    if deleted:
+
+        return {
+            "success": True,
+            "message": f"Item '{name}' permanently deleted"
+        }
+
+    return {
+        "error": "Item not found in trash"
     }

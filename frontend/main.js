@@ -16,6 +16,10 @@ let directoryTree = null;
 
 let currentView = "dashboard";
 
+let currentEditingFile = null;
+
+let currentEditingTags = [];
+
 ////////////////////////////////////////////////////////////
 // LOAD TREE
 ////////////////////////////////////////////////////////////
@@ -40,6 +44,35 @@ async function loadTree() {
 
         console.error(
             "Error loading tree:",
+            error
+        );
+    }
+}
+
+////////////////////////////////////////////////////////////
+// LOAD TRASH COUNT
+////////////////////////////////////////////////////////////
+
+async function loadTrashCount() {
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_URL}/trash`
+            );
+
+        const data =
+            await response.json();
+
+        document.getElementById(
+            "trash-count"
+        ).textContent = data.count || 0;
+
+    } catch (error) {
+
+        console.error(
+            "Error loading trash:",
             error
         );
     }
@@ -77,27 +110,32 @@ async function loadStats() {
                 : 0;
 
         ////////////////////////////////////////////////////
-        // CARDS
+        // RECENT FILES (últimos 5)
         ////////////////////////////////////////////////////
 
         document.getElementById(
-            "files-count"
-        ).textContent =
-            stats.total_files || 0;
+            "recent-files-count"
+        ).textContent = Math.min(
+            stats.total_files,
+            5
+        );
+
+        ////////////////////////////////////////////////////
+        // TRASH (placeholder for now)
+        ////////////////////////////////////////////////////
 
         document.getElementById(
-            "directories-count"
-        ).textContent =
-            stats.total_directories || 0;
-
-        document.getElementById(
-            "shared-files"
-        ).textContent =
-            stats.shared_files || 0;
+            "trash-count"
+        ).textContent = 0;
 
         ////////////////////////////////////////////////////
         // STORAGE
         ////////////////////////////////////////////////////
+
+        document.getElementById(
+            "storage-used-gb"
+        ).textContent =
+            `${usedGB.toFixed(2)} GB`;
 
         document.getElementById(
             "storage-percent"
@@ -461,6 +499,16 @@ function renderDirectoryContent(data) {
 
         ////////////////////////////////////////////////////
 
+        const createdDate = new Date(
+            directory.created_at
+        ).toLocaleDateString("es-ES");
+
+        const sizeKB = (
+            directory.size / 1024
+        ).toFixed(2);
+
+        ////////////////////////////////////////////////////
+
         row.innerHTML = `
             <td>
 
@@ -476,11 +524,15 @@ function renderDirectoryContent(data) {
 
             </td>
 
-            <td>Directorio</td>
+            <td>Carpeta</td>
 
-            <td>--</td>
+            <td>
+                ${createdDate}
+            </td>
 
-            <td>--</td>
+            <td>
+                ${sizeKB} KB
+            </td>
 
             <td>
 
@@ -538,6 +590,12 @@ function renderDirectoryContent(data) {
 
         ////////////////////////////////////////////////////
 
+        const uploadedDate = new Date(
+            file.uploaded_at
+        ).toLocaleDateString("es-ES");
+
+        ////////////////////////////////////////////////////
+
         row.innerHTML = `
             <td>
 
@@ -566,7 +624,7 @@ function renderDirectoryContent(data) {
             <td>Archivo</td>
 
             <td>
-                ${file.uploaded_at || "--"}
+                ${uploadedDate}
             </td>
 
             <td>
@@ -578,6 +636,10 @@ function renderDirectoryContent(data) {
             </td>
 
             <td>
+
+                <button class="edit-tags-btn" data-file-name="${file.name}">
+                    Tags
+                </button>
 
                 <button class="rename-file-btn">
                     Renombrar
@@ -638,6 +700,16 @@ function renderOnlyDirectories(
 
         ////////////////////////////////////////////////////
 
+        const createdDate = new Date(
+            directory.created_at
+        ).toLocaleDateString("es-ES");
+
+        const sizeKB = (
+            directory.size / 1024
+        ).toFixed(2);
+
+        ////////////////////////////////////////////////////
+
         row.innerHTML = `
             <td>
 
@@ -653,11 +725,15 @@ function renderOnlyDirectories(
 
             </td>
 
-            <td>Directorio</td>
+            <td>Carpeta</td>
 
-            <td>--</td>
+            <td>
+                ${createdDate}
+            </td>
 
-            <td>--</td>
+            <td>
+                ${sizeKB} KB
+            </td>
 
             <td>Carpeta</td>
         `;
@@ -828,6 +904,448 @@ async function uploadFile(file) {
     }
 }
 /////////////////////////////////////////////////////////////
+// CRUD OPERATIONS
+////////////////////////////////////////////////////////////
+
+async function createDirectory(name) {
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_URL}/directory`,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        parent: currentDirectory,
+
+                        name: name
+                    })
+                }
+            );
+
+        ////////////////////////////////////////////////////
+
+        const result =
+            await response.json();
+
+        if (result.message) {
+
+            await loadDirectoryContent(
+                currentDirectory
+            );
+
+            await loadTree();
+
+            await loadStats();
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Error creating directory:",
+            error
+        );
+
+        alert(
+            "Error al crear la carpeta"
+        );
+    }
+}
+
+async function createFile(name) {
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_URL}/file`,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        directory:
+                            currentDirectory,
+
+                        name: name,
+
+                        tags: []
+                    })
+                }
+            );
+
+        ////////////////////////////////////////////////////
+
+        const result =
+            await response.json();
+
+        if (result.message) {
+
+            await loadDirectoryContent(
+                currentDirectory
+            );
+
+            await loadStats();
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Error creating file:",
+            error
+        );
+
+        alert(
+            "Error al crear el archivo"
+        );
+    }
+}
+
+async function renameDirectory(
+    oldName,
+    newName
+) {
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_URL}/directory/rename`,
+                {
+                    method: "PUT",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        path: currentDirectory,
+
+                        old_name: oldName,
+
+                        new_name: newName
+                    })
+                }
+            );
+
+        ////////////////////////////////////////////////////
+
+        const result =
+            await response.json();
+
+        if (result.success) {
+
+            await loadDirectoryContent(
+                currentDirectory
+            );
+
+            await loadTree();
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Error renaming directory:",
+            error
+        );
+
+        alert(
+            "Error al renombrar la carpeta"
+        );
+    }
+}
+
+async function renameFile(
+    oldName,
+    newName
+) {
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_URL}/file/rename`,
+                {
+                    method: "PUT",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        path: currentDirectory,
+
+                        old_name: oldName,
+
+                        new_name: newName
+                    })
+                }
+            );
+
+        ////////////////////////////////////////////////////
+
+        const result =
+            await response.json();
+
+        if (result.success) {
+
+            await loadDirectoryContent(
+                currentDirectory
+            );
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Error renaming file:",
+            error
+        );
+
+        alert(
+            "Error al renombrar el archivo"
+        );
+    }
+}
+
+async function deleteDirectory(name) {
+
+    if (!confirm(
+        `¿Eliminar carpeta "${name}"?`
+    )) return;
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_URL}/directory?path=${currentDirectory}&name=${name}`,
+                {
+                    method: "DELETE"
+                }
+            );
+
+        ////////////////////////////////////////////////////
+
+        const result =
+            await response.json();
+
+        if (result.success) {
+
+            await loadDirectoryContent(
+                currentDirectory
+            );
+
+            await loadTree();
+
+            await loadStats();
+
+            await loadTrashCount();
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Error deleting directory:",
+            error
+        );
+
+        alert(
+            "Error al eliminar la carpeta"
+        );
+    }
+}
+
+async function deleteFile(name) {
+
+    if (!confirm(
+        `¿Eliminar archivo "${name}"?`
+    )) return;
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_URL}/file?path=${currentDirectory}&name=${name}`,
+                {
+                    method: "DELETE"
+                }
+            );
+
+        ////////////////////////////////////////////////////
+
+        const result =
+            await response.json();
+
+        if (result.success) {
+
+            await loadDirectoryContent(
+                currentDirectory
+            );
+
+            await loadStats();
+
+            await loadTrashCount();
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Error deleting file:",
+            error
+        );
+
+        alert(
+            "Error al eliminar el archivo"
+        );
+    }
+}
+
+/////////////////////////////////////////////////////////////
+// TAGS MODAL
+////////////////////////////////////////////////////////////
+
+function openTagsModal(fileName, tags) {
+
+    currentEditingFile = fileName;
+
+    currentEditingTags = [...tags];
+
+    const tagsList =
+        document.getElementById("tags-list");
+
+    tagsList.innerHTML = "";
+
+    ////////////////////////////////////////////////////////
+
+    currentEditingTags.forEach(tag => {
+
+        const tagItem =
+            document.createElement("div");
+
+        tagItem.className = "tag-item";
+
+        tagItem.innerHTML = `
+            ${tag}
+            <button
+                class="tag-remove-btn"
+                data-tag="${tag}"
+            >
+                ×
+            </button>
+        `;
+
+        tagsList.appendChild(tagItem);
+
+        ////////////////////////////////////////////////////
+
+        const removeBtn = tagItem.querySelector(
+            ".tag-remove-btn"
+        );
+
+        removeBtn.addEventListener(
+            "click",
+            () => {
+
+                currentEditingTags =
+                    currentEditingTags.filter(
+                        t => t !== tag
+                    );
+
+                openTagsModal(
+                    fileName,
+                    currentEditingTags
+                );
+            }
+        );
+    });
+
+    ////////////////////////////////////////////////////////
+
+    document.getElementById(
+        "tags-modal"
+    ).classList.add("show");
+
+    document.getElementById(
+        "tag-input"
+    ).focus();
+}
+
+function closeTagsModal() {
+
+    document.getElementById(
+        "tags-modal"
+    ).classList.remove("show");
+
+    currentEditingFile = null;
+
+    currentEditingTags = [];
+}
+
+async function saveFileTags() {
+
+    if (!currentEditingFile) return;
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_URL}/file/tags`,
+                {
+                    method: "PUT",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        path: currentDirectory,
+
+                        file_name:
+                            currentEditingFile,
+
+                        tags:
+                            currentEditingTags
+                    })
+                }
+            );
+
+        ////////////////////////////////////////////////////
+
+        const result =
+            await response.json();
+
+        if (result.success) {
+
+            closeTagsModal();
+
+            await loadDirectoryContent(
+                currentDirectory
+            );
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Error saving tags:",
+            error
+        );
+    }
+}
+
+/////////////////////////////////////////////////////////////
 // INIT
 ////////////////////////////////////////////////////////////
 
@@ -847,6 +1365,8 @@ document.addEventListener(
 
         loadStats();
 
+        loadTrashCount();
+
         renderBreadcrumbs(
             currentDirectory
         );
@@ -865,7 +1385,7 @@ document.addEventListener(
             async () => {
 
                 const name = prompt(
-                    "Nombre del directorio"
+                    "Nombre de la carpeta"
                 );
 
                 if (!name) return;
@@ -962,11 +1482,11 @@ document.addEventListener(
         );
 
         ////////////////////////////////////////////////////
-        // FILES CARD
+        // RECENT FILES CARD
         ////////////////////////////////////////////////////
 
         document.getElementById(
-            "files-card"
+            "recent-files-card"
         ).addEventListener(
             "click",
             async () => {
@@ -981,20 +1501,17 @@ document.addEventListener(
         );
 
         ////////////////////////////////////////////////////
-        // DIRECTORIES CARD
+        // TRASH CARD
         ////////////////////////////////////////////////////
 
         document.getElementById(
-            "directories-card"
+            "trash-card"
         ).addEventListener(
             "click",
             async () => {
 
-                currentView =
-                    "directories";
-
-                await loadDirectoryContent(
-                    currentDirectory
+                alert(
+                    "Papelera en desarrollo"
                 );
             }
         );
@@ -1060,6 +1577,246 @@ document.addEventListener(
                 await loadDirectoryContent(
                     currentDirectory
                 );
+            }
+        );
+
+        ////////////////////////////////////////////////////
+        // TAGS MODAL
+        ////////////////////////////////////////////////////
+
+        document.getElementById(
+            "close-tags-modal"
+        ).addEventListener(
+            "click",
+            closeTagsModal
+        );
+
+        document.getElementById(
+            "cancel-tags-btn"
+        ).addEventListener(
+            "click",
+            closeTagsModal
+        );
+
+        document.getElementById(
+            "save-tags-btn"
+        ).addEventListener(
+            "click",
+            saveFileTags
+        );
+
+        document.getElementById(
+            "tag-input"
+        ).addEventListener(
+            "keydown",
+            (event) => {
+
+                if (event.key !== "Enter")
+                    return;
+
+                const input =
+                    document.getElementById(
+                        "tag-input"
+                    );
+
+                const tag =
+                    input.value.trim()
+                        .toLowerCase();
+
+                if (!tag) return;
+
+                if (!currentEditingTags
+                    .includes(tag)) {
+
+                    currentEditingTags.push(
+                        tag
+                    );
+                }
+
+                input.value = "";
+
+                openTagsModal(
+                    currentEditingFile,
+                    currentEditingTags
+                );
+            }
+        );
+
+        ////////////////////////////////////////////////////
+        // TABLE DELEGATION - EDIT TAGS
+        ////////////////////////////////////////////////////
+
+        document.getElementById(
+            "table-body"
+        ).addEventListener(
+            "click",
+            async (event) => {
+
+                const editTagsBtn =
+                    event.target.closest(
+                        ".edit-tags-btn"
+                    );
+
+                if (editTagsBtn) {
+
+                    const fileName =
+                        editTagsBtn.dataset
+                            .fileName;
+
+                    const row = editTagsBtn
+                        .closest("tr");
+
+                    const tagsSpans =
+                        row.querySelectorAll(
+                            ".tag-badge"
+                        );
+
+                    const tags = Array.from(
+                        tagsSpans
+                    ).map(span => {
+
+                        const text =
+                            span.textContent;
+
+                        return text.replace(
+                            "#",
+                            ""
+                        );
+                    });
+
+                    openTagsModal(
+                        fileName,
+                        tags
+                    );
+                }
+
+                ////////////////////////////////////////////////////
+                // RENAME DIRECTORY
+                ////////////////////////////////////////////////////
+
+                const renameDirectoryBtn =
+                    event.target.closest(
+                        ".rename-directory-btn"
+                    );
+
+                if (renameDirectoryBtn) {
+
+                    const row = renameDirectoryBtn
+                        .closest("tr");
+
+                    const dirName =
+                        row.querySelector(
+                            ".file-info"
+                        ).textContent.trim();
+
+                    const newName = prompt(
+                        "Nuevo nombre de la carpeta:",
+                        dirName
+                    );
+
+                    if (
+                        newName &&
+                        newName !== dirName
+                    ) {
+
+                        await renameDirectory(
+                            dirName,
+                            newName
+                        );
+                    }
+                }
+
+                ////////////////////////////////////////////////////
+                // DELETE DIRECTORY
+                ////////////////////////////////////////////////////
+
+                const deleteDirectoryBtn =
+                    event.target.closest(
+                        ".delete-directory-btn"
+                    );
+
+                if (deleteDirectoryBtn) {
+
+                    const row = deleteDirectoryBtn
+                        .closest("tr");
+
+                    const dirName =
+                        row.querySelector(
+                            ".file-info"
+                        ).textContent.trim();
+
+                    await deleteDirectory(
+                        dirName
+                    );
+                }
+
+                ////////////////////////////////////////////////////
+                // RENAME FILE
+                ////////////////////////////////////////////////////
+
+                const renameFileBtn =
+                    event.target.closest(
+                        ".rename-file-btn"
+                    );
+
+                if (renameFileBtn) {
+
+                    const row = renameFileBtn
+                        .closest("tr");
+
+                    const fileInfo =
+                        row.querySelector(
+                            ".file-info"
+                        );
+
+                    const fileName =
+                        fileInfo.textContent
+                            .trim();
+
+                    const newName = prompt(
+                        "Nuevo nombre del archivo:",
+                        fileName
+                    );
+
+                    if (
+                        newName &&
+                        newName !== fileName
+                    ) {
+
+                        await renameFile(
+                            fileName,
+                            newName
+                        );
+                    }
+                }
+
+                ////////////////////////////////////////////////////
+                // DELETE FILE
+                ////////////////////////////////////////////////////
+
+                const deleteFileBtn =
+                    event.target.closest(
+                        ".delete-file-btn"
+                    );
+
+                if (deleteFileBtn) {
+
+                    const row = deleteFileBtn
+                        .closest("tr");
+
+                    const fileInfo =
+                        row.querySelector(
+                            ".file-info"
+                        );
+
+                    const fileName =
+                        fileInfo.textContent
+                            .trim();
+
+                    await deleteFile(
+                        fileName
+                    );
+                }
             }
         );
 

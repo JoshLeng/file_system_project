@@ -65,7 +65,7 @@
 
                     <i class="fa-solid fa-plus"></i>
 
-                    Crear directorio
+                    Nueva carpeta
 
                 </button>
 
@@ -192,24 +192,24 @@
 
             <section class="stats-grid">
 
-                <!-- FILES -->
+                <!-- RECENT FILES -->
 
                 <div
                     class="stat-card blue-card"
-                    id="files-card"
+                    id="recent-files-card"
                 >
 
                     <div>
 
-                        <p>Archivos</p>
+                        <p>Recientes</p>
 
-                        <h2 id="files-count">
+                        <h2 id="recent-files-count">
                             0
                         </h2>
 
                     </div>
 
-                    <i class="fa-regular fa-file"></i>
+                    <i class="fa-regular fa-clock"></i>
 
                 </div>
 
@@ -217,38 +217,38 @@
 
                 <div
                     class="stat-card dark-card"
-                    id="directories-card"
+                    id="trash-card"
                 >
 
                     <div>
 
-                        <p>Directorios</p>
+                        <p>Papelera</p>
 
-                        <h2 id="directories-count">
+                        <h2 id="trash-count">
                             0
                         </h2>
 
                     </div>
 
-                    <i class="fa-regular fa-folder"></i>
+                    <i class="fa-regular fa-trash"></i>
 
                 </div>
 
-                <!-- SHARED -->
+                <!-- TOTAL SIZE -->
 
                 <div class="stat-card purple-card">
 
                     <div>
 
-                        <p>Compartidos</p>
+                        <p>Almacenamiento</p>
 
-                        <h2 id="shared-files">
-                            0
+                        <h2 id="storage-used-gb">
+                            0 GB
                         </h2>
 
                     </div>
 
-                    <i class="fa-solid fa-share-nodes"></i>
+                    <i class="fa-solid fa-database"></i>
 
                 </div>
 
@@ -337,6 +337,55 @@
             </section>
 
         </main>
+
+    </div>
+
+    <!-- TAGS MODAL -->
+
+    <div class="modal" id="tags-modal">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h2>Editar etiquetas</h2>
+
+                <button class="modal-close-btn" id="close-tags-modal">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <div class="tags-input-section">
+
+                    <input
+                        type="text"
+                        id="tag-input"
+                        placeholder="Agregar nueva etiqueta y presionar Enter"
+                        class="tag-input"
+                    >
+
+                </div>
+
+                <div class="tags-list" id="tags-list"></div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button class="btn-cancel" id="cancel-tags-btn">
+                    Cancelar
+                </button>
+
+                <button class="btn-save" id="save-tags-btn">
+                    Guardar
+                </button>
+
+            </div>
+
+        </div>
 
     </div>
 
