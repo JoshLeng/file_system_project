@@ -540,7 +540,11 @@ function renderDirectoryContent(data) {
                     Renombrar
                 </button>
 
-                <button class="delete-directory-btn">
+                <button class="rename-directory-btn" data-dir-name="${directory.name}">
+                    Renombrar
+                </button>
+
+                <button class="delete-directory-btn" data-dir-name="${directory.name}">
                     Eliminar
                 </button>
 
@@ -1019,6 +1023,8 @@ async function renameDirectory(
 
     try {
 
+        console.log('renameDirectory called', { oldName, newName, currentDirectory });
+
         const response =
             await fetch(
                 `${API_URL}/directory/rename`,
@@ -1044,6 +1050,8 @@ async function renameDirectory(
 
         const result =
             await response.json();
+
+        console.log('renameDirectory response', result);
 
         if (result.success) {
 
@@ -1694,37 +1702,40 @@ document.addEventListener(
                 // RENAME DIRECTORY
                 ////////////////////////////////////////////////////
 
-                const renameDirectoryBtn =
-                    event.target.closest(
-                        ".rename-directory-btn"
-                    );
+                // DESPUÉS — rename directory
+const renameDirectoryBtn =
+    event.target.closest(
+        ".rename-directory-btn"
+    );
 
-                if (renameDirectoryBtn) {
+    if (renameDirectoryBtn) {
 
-                    const row = renameDirectoryBtn
-                        .closest("tr");
+    event.stopPropagation(); // ← evita navegar al directorio
 
-                    const dirName =
-                        row.querySelector(
-                            ".file-info"
-                        ).textContent.trim();
+    const row = renameDirectoryBtn
+        .closest("tr");
 
-                    const newName = prompt(
-                        "Nuevo nombre de la carpeta:",
-                        dirName
-                    );
+    // Preferir el nombre en el dataset (más fiable)
+    const dirName = renameDirectoryBtn.dataset.dirName || (function(){
+        const fileInfo = row.querySelector(".file-info");
+        return Array.from(fileInfo.childNodes)
+            .filter(n => n.nodeType === Node.TEXT_NODE)
+            .map(n => n.textContent.trim())
+            .filter(Boolean)
+            .join("").trim();
+    })();
 
-                    if (
-                        newName &&
-                        newName !== dirName
-                    ) {
+    console.log('renameDirectoryBtn clicked', { dirName, currentDirectory });
 
-                        await renameDirectory(
-                            dirName,
-                            newName
-                        );
-                    }
-                }
+    const newName = prompt(
+        "Nuevo nombre de la carpeta:",
+        dirName
+    );
+
+    if (newName && newName !== dirName) {
+        await renameDirectory(dirName, newName);
+    }
+}
 
                 ////////////////////////////////////////////////////
                 // DELETE DIRECTORY
@@ -1736,14 +1747,11 @@ document.addEventListener(
                     );
 
                 if (deleteDirectoryBtn) {
-
+                    event.stopPropagation();
                     const row = deleteDirectoryBtn
                         .closest("tr");
 
-                    const dirName =
-                        row.querySelector(
-                            ".file-info"
-                        ).textContent.trim();
+                    const dirName = deleteDirectoryBtn.dataset.dirName || row.querySelector('.file-info').textContent.trim();
 
                     await deleteDirectory(
                         dirName
@@ -1754,41 +1762,28 @@ document.addEventListener(
                 // RENAME FILE
                 ////////////////////////////////////////////////////
 
-                const renameFileBtn =
-                    event.target.closest(
-                        ".rename-file-btn"
-                    );
+                // DESPUÉS — rename file
+const renameFileBtn =
+    event.target.closest(".rename-file-btn");
 
-                if (renameFileBtn) {
+if (renameFileBtn) {
 
-                    const row = renameFileBtn
-                        .closest("tr");
+    event.stopPropagation(); // ← añadir esto
 
-                    const fileInfo =
-                        row.querySelector(
-                            ".file-info"
-                        );
+    const row = renameFileBtn.closest("tr");
+    const fileInfo = row.querySelector(".file-info");
+    const fileName = Array.from(fileInfo.childNodes)
+        .filter(n => n.nodeType === Node.TEXT_NODE)
+        .map(n => n.textContent.trim())
+        .filter(Boolean)
+        .join("").trim();
 
-                    const fileName =
-                        fileInfo.textContent
-                            .trim();
+    const newName = prompt("Nuevo nombre del archivo:", fileName);
 
-                    const newName = prompt(
-                        "Nuevo nombre del archivo:",
-                        fileName
-                    );
-
-                    if (
-                        newName &&
-                        newName !== fileName
-                    ) {
-
-                        await renameFile(
-                            fileName,
-                            newName
-                        );
-                    }
-                }
+    if (newName && newName !== fileName) {
+        await renameFile(fileName, newName);
+    }
+}
 
                 ////////////////////////////////////////////////////
                 // DELETE FILE
@@ -1800,7 +1795,7 @@ document.addEventListener(
                     );
 
                 if (deleteFileBtn) {
-
+                    event.stopPropagation();
                     const row = deleteFileBtn
                         .closest("tr");
 
