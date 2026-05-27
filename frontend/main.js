@@ -17,7 +17,8 @@ let currentView = "dashboard";
 let currentEditingFile = null;
 let currentEditingTags = [];
 let originalTableHeaders = null;
-let pendingLoad = null;
+let pendingLoadController = null;
+let lastLoadRequestId = 0;
 
 ////////////////////////////////////////////////////////////
 // LOAD TREE
@@ -70,7 +71,6 @@ function renderSidebar(directory, container = null) {
         const tableBody = document.getElementById("table-body");
         if (tableBody) tableBody.innerHTML = "";
         await loadDirectoryContent(currentDirectory);
-        renderBreadcrumbs(currentDirectory);
         
         document.getElementById("dashboard-view-btn").classList.add("active");
         document.getElementById("directories-view-btn").classList.remove("active");
@@ -94,35 +94,51 @@ function renderSidebar(directory, container = null) {
 ////////////////////////////////////////////////////////////
 
 async function loadDirectoryContent(path) {
-    if (pendingLoad) {
-        console.log("Cancelando carga anterior");
-        return;
-    }
-
     if (path && path !== currentDirectory) {
         currentDirectory = path;
         lastDirectory = path;
     }
 
+    const targetDirectory = currentDirectory;
+    const requestId = ++lastLoadRequestId;
+
+    if (pendingLoadController) {
+        pendingLoadController.abort();
+    }
+
+    pendingLoadController = new AbortController();
+
     const tableBody = document.getElementById("table-body");
     if (tableBody) tableBody.innerHTML = "";
 
-    pendingLoad = true;
-
     try {
-        const response = await fetch(`${API_URL}/directory/content?path=${currentDirectory}`);
+        const response = await fetch(
+            `${API_URL}/directory/content?path=${encodeURIComponent(targetDirectory)}`,
+            { signal: pendingLoadController.signal }
+        );
         const data = await response.json();
+
+        if (requestId !== lastLoadRequestId) {
+            return;
+        }
 
         if (data.error) {
             console.error("Error del servidor:", data.error);
             return;
         }
 
+        currentDirectory = targetDirectory;
+        lastDirectory = targetDirectory;
         renderDirectoryContent(data);
+        renderBreadcrumbs(currentDirectory);
     } catch (error) {
-        console.error("Error loading content:", error);
+        if (error.name !== "AbortError") {
+            console.error("Error loading content:", error);
+        }
     } finally {
-        pendingLoad = false;
+        if (requestId === lastLoadRequestId) {
+            pendingLoadController = null;
+        }
     }
 }
 
@@ -346,7 +362,7 @@ function renderDirectoryContent(data) {
     }
 
     if (data.directories.length === 0 && data.files.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="5">Directorio vacío</td></tr>`;
+        tableBody.innerHTML = `<td><td colspan="5">Directorio vacío</td></tr>`;
         return;
     }
 
@@ -380,7 +396,6 @@ function renderDirectoryContent(data) {
             lastDirectory = currentDirectory;
             currentView = "dashboard";
             loadDirectoryContent(currentDirectory);
-            renderBreadcrumbs(currentDirectory);
         };
 
         tableBody.appendChild(row);
@@ -454,7 +469,6 @@ function renderOnlyDirectories(directories) {
             lastDirectory = currentDirectory;
             currentView = "dashboard";
             await loadDirectoryContent(currentDirectory);
-            renderBreadcrumbs(currentDirectory);
         };
 
         tableBody.appendChild(row);
@@ -486,7 +500,6 @@ function renderBreadcrumbs(path) {
             lastDirectory = currentDirectory;
             currentView = "dashboard";
             await loadDirectoryContent(currentDirectory);
-            renderBreadcrumbs(currentDirectory);
         };
 
         container.appendChild(crumb);
@@ -569,45 +582,43 @@ function renderSearchResults(files) {
 ////////////////////////////////////////////////////////////
 
 async function uploadFile(file) {
-    // Guardar la carpeta actual ANTES de cualquier cosa
     const savedDirectory = currentDirectory;
-    console.log("📁 Carpeta actual guardada:", savedDirectory);
-    
-    const tagsInput = prompt("Tags separadas por coma\nEjemplo: urgente,imagen,trabajo");
+    const tagsInput = prompt("Tags separadas por coma");
 
     try {
         const formData = new FormData();
         formData.append("uploaded_file", file);
 
-        const response = await fetch(`${API_URL}/upload?path=${encodeURIComponent(savedDirectory)}&tags=${encodeURIComponent(tagsInput || "")}`, {
+        const uploadResponse = await fetch(`${API_URL}/upload?path=${encodeURIComponent(savedDirectory)}&tags=${encodeURIComponent(tagsInput || "")}`, {
             method: "POST",
             body: formData
         });
 
-        if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status}`);
-        }
+        if (!uploadResponse.ok) throw new Error(`HTTP ${uploadResponse.status}`);
 
-        const result = await response.json();
-        console.log("✅ Subida exitosa:", result);
+        console.log("✅ Archivo subido");
 
-        // IMPORTANTE: Prevenir cualquier recarga
-        event?.preventDefault?.();
-        
         // Restaurar carpeta
         currentDirectory = savedDirectory;
         lastDirectory = savedDirectory;
+
+        // RECARGAR MANUALMENTE como en showTrashView
+        const contentResponse = await fetch(`${API_URL}/directory/content?path=${encodeURIComponent(savedDirectory)}`);
+        const data = await contentResponse.json();
         
-        // Recargar contenido SIN recargar página
-        await loadDirectoryContent(currentDirectory);
+        renderDirectoryContent(data);
+        renderBreadcrumbs(savedDirectory);
+        
         await loadStats();
         await loadRecentCount();
         
-        console.log("✅ Todo actualizado - Carpeta:", currentDirectory);
-        
+        console.log("✅ Actualización completa - Carpeta:", currentDirectory);
+
     } catch (error) {
-        console.error("❌ Error en upload:", error);
-        alert("Error al subir el archivo: " + error.message);
+        console.error("❌ Error:", error);
+        alert("Error al subir: " + error.message);
+        currentDirectory = savedDirectory;
+        lastDirectory = savedDirectory;
     }
 }
 ////////////////////////////////////////////////////////////
@@ -790,7 +801,6 @@ async function navigateToRecentFile(fileName) {
             currentView = "dashboard";
             setTableHeaders("dashboard");
             await loadDirectoryContent(currentDirectory);
-            renderBreadcrumbs(currentDirectory);
 
             setTimeout(() => highlightFileInTable(fileName), 500);
             alert(`✅ Archivo encontrado en: ${location}`);
@@ -798,7 +808,6 @@ async function navigateToRecentFile(fileName) {
             currentDirectory = "root";
             lastDirectory = "root";
             await loadDirectoryContent("root");
-            renderBreadcrumbs("root");
             alert(`⚠️ Archivo encontrado en la raíz`);
         }
 
@@ -935,6 +944,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("file-input").addEventListener("change", async (event) => {
         const file = event.target.files[0];
         if (file) await uploadFile(file);
+        event.target.value = ""; // Limpiar input
     });
 
     document.querySelector(".search-box input").addEventListener("keydown", async (event) => {
@@ -966,7 +976,6 @@ document.addEventListener("DOMContentLoaded", () => {
         
         setTableHeaders("dashboard");
         await loadDirectoryContent(currentDirectory);
-        renderBreadcrumbs(currentDirectory);
     });
 
     document.getElementById("directories-view-btn").addEventListener("click", async () => {
