@@ -11,41 +11,118 @@ const API_URL = "http://127.0.0.1:8000";
 ////////////////////////////////////////////////////////////
 
 let currentDirectory = "root";
-
+let lastDirectory = "root";
 let directoryTree = null;
-
 let currentView = "dashboard";
-
 let currentEditingFile = null;
-
 let currentEditingTags = [];
+let originalTableHeaders = null;
+let pendingLoad = null;
 
 ////////////////////////////////////////////////////////////
 // LOAD TREE
 ////////////////////////////////////////////////////////////
 
 async function loadTree() {
+    try {
+        const response = await fetch(`${API_URL}/tree`);
+        directoryTree = await response.json();
+        renderSidebar(directoryTree);
+    } catch (error) {
+        console.error("Error loading tree:", error);
+    }
+}
+
+////////////////////////////////////////////////////////////
+// REFRESH SIDEBAR
+////////////////////////////////////////////////////////////
+
+async function refreshSidebar() {
+    try {
+        const response = await fetch(`${API_URL}/tree`);
+        directoryTree = await response.json();
+        renderSidebar(directoryTree);
+    } catch (error) {
+        console.error("Error refreshing sidebar:", error);
+    }
+}
+
+////////////////////////////////////////////////////////////
+// RENDER SIDEBAR
+////////////////////////////////////////////////////////////
+
+function renderSidebar(directory, container = null) {
+    if (!container) {
+        container = document.getElementById("directory-tree");
+        container.innerHTML = "";
+    }
+
+    const item = document.createElement("div");
+    item.className = "directory-item";
+    item.textContent = directory.name;
+    item.style.padding = "10px";
+    item.style.cursor = "pointer";
+
+    item.onclick = async () => {
+        currentDirectory = directory.path;
+        lastDirectory = currentDirectory;
+        currentView = "dashboard";
+        const tableBody = document.getElementById("table-body");
+        if (tableBody) tableBody.innerHTML = "";
+        await loadDirectoryContent(currentDirectory);
+        renderBreadcrumbs(currentDirectory);
+        
+        document.getElementById("dashboard-view-btn").classList.add("active");
+        document.getElementById("directories-view-btn").classList.remove("active");
+        setTableHeaders("dashboard");
+    };
+
+    container.appendChild(item);
+
+    if (directory.subdirectories && directory.subdirectories.length > 0) {
+        const childrenContainer = document.createElement("div");
+        childrenContainer.style.marginLeft = "20px";
+        container.appendChild(childrenContainer);
+        directory.subdirectories.forEach(subdirectory => {
+            renderSidebar(subdirectory, childrenContainer);
+        });
+    }
+}
+
+////////////////////////////////////////////////////////////
+// LOAD DIRECTORY CONTENT
+////////////////////////////////////////////////////////////
+
+async function loadDirectoryContent(path) {
+    if (pendingLoad) {
+        console.log("Cancelando carga anterior");
+        return;
+    }
+
+    if (path && path !== currentDirectory) {
+        currentDirectory = path;
+        lastDirectory = path;
+    }
+
+    const tableBody = document.getElementById("table-body");
+    if (tableBody) tableBody.innerHTML = "";
+
+    pendingLoad = true;
 
     try {
+        const response = await fetch(`${API_URL}/directory/content?path=${currentDirectory}`);
+        const data = await response.json();
 
-        const response =
-            await fetch(
-                `${API_URL}/tree`
-            );
+        if (data.error) {
+            console.error("Error del servidor:", data.error);
+            return;
+        }
 
-        directoryTree =
-            await response.json();
-
-        renderSidebar(
-            directoryTree
-        );
-
+        renderDirectoryContent(data);
     } catch (error) {
-
-        console.error(
-            "Error loading tree:",
-            error
-        );
+        console.error("Error loading content:", error);
+    } finally {
+        pendingLoad = false;
     }
 }
 
@@ -54,27 +131,26 @@ async function loadTree() {
 ////////////////////////////////////////////////////////////
 
 async function loadTrashCount() {
-
     try {
-
-        const response =
-            await fetch(
-                `${API_URL}/trash`
-            );
-
-        const data =
-            await response.json();
-
-        document.getElementById(
-            "trash-count"
-        ).textContent = data.count || 0;
-
+        const response = await fetch(`${API_URL}/trash`);
+        const data = await response.json();
+        document.getElementById("trash-count").textContent = data.count || 0;
     } catch (error) {
+        console.error("Error loading trash count:", error);
+    }
+}
 
-        console.error(
-            "Error loading trash:",
-            error
-        );
+////////////////////////////////////////////////////////////
+// LOAD RECENT COUNT
+////////////////////////////////////////////////////////////
+
+async function loadRecentCount() {
+    try {
+        const response = await fetch(`${API_URL}/recent/files`);
+        const data = await response.json();
+        document.getElementById("recent-files-count").textContent = data.count || 0;
+    } catch (error) {
+        console.error("Error loading recent count:", error);
     }
 }
 
@@ -83,360 +159,168 @@ async function loadTrashCount() {
 ////////////////////////////////////////////////////////////
 
 async function loadStats() {
-
     try {
+        const response = await fetch(`${API_URL}/stats`);
+        const stats = await response.json();
 
-        const response =
-            await fetch(
-                `${API_URL}/stats`
-            );
+        const usedGB = Number(stats.used_gb) || 0;
+        const maxGB = Number(stats.max_gb) || 10;
+        const percent = maxGB > 0 ? (usedGB / maxGB) * 100 : 0;
 
-        const stats =
-            await response.json();
-
-        ////////////////////////////////////////////////////
-        // SAFE VALUES
-        ////////////////////////////////////////////////////
-
-        const usedGB =
-            Number(stats.used_gb) || 0;
-
-        const maxGB =
-            Number(stats.max_gb) || 10;
-
-        const percent =
-            maxGB > 0
-                ? (usedGB / maxGB) * 100
-                : 0;
-
-        ////////////////////////////////////////////////////
-        // RECENT FILES (últimos 5)
-        ////////////////////////////////////////////////////
-
-        document.getElementById(
-            "recent-files-count"
-        ).textContent = Math.min(
-            stats.total_files,
-            5
-        );
-
-        ////////////////////////////////////////////////////
-        // TRASH (placeholder for now)
-        ////////////////////////////////////////////////////
-
-        document.getElementById(
-            "trash-count"
-        ).textContent = 0;
-
-        ////////////////////////////////////////////////////
-        // STORAGE
-        ////////////////////////////////////////////////////
-
-        document.getElementById(
-            "storage-used-gb"
-        ).textContent =
-            `${usedGB.toFixed(2)} GB`;
-
-        document.getElementById(
-            "storage-percent"
-        ).textContent =
-            `${percent.toFixed(1)}%`;
-
-        document.getElementById(
-            "storage-text"
-        ).textContent =
-            `${usedGB.toFixed(2)} GB de ${maxGB} GB utilizados`;
-
-        document.getElementById(
-            "storage-fill"
-        ).style.width =
-            `${percent}%`;
-
+        document.getElementById("storage-used-gb").textContent = `${usedGB.toFixed(2)} GB`;
+        document.getElementById("storage-percent").textContent = `${percent.toFixed(1)}%`;
+        document.getElementById("storage-text").textContent = `${usedGB.toFixed(2)} GB de ${maxGB} GB utilizados`;
+        document.getElementById("storage-fill").style.width = `${percent}%`;
     } catch (error) {
-
-        console.error(
-            "Error loading stats:",
-            error
-        );
-    }
-}
-////////////////////////////////////////////////////////////
-// RENDER SIDEBAR
-////////////////////////////////////////////////////////////
-
-function renderSidebar(
-    directory,
-    container = null
-) {
-
-    if (!container) {
-
-        container =
-            document.getElementById(
-                "directory-tree"
-            );
-
-        container.innerHTML = "";
-    }
-
-    ////////////////////////////////////////////////////////
-
-    const item =
-        document.createElement("div");
-
-    item.className =
-        "directory-item";
-
-    item.textContent =
-        directory.name;
-
-    item.style.padding =
-        "10px";
-
-    item.style.cursor =
-        "pointer";
-
-    ////////////////////////////////////////////////////////
-
-    item.onclick = async () => {
-
-        currentDirectory =
-            directory.path;
-
-        await loadDirectoryContent(
-            currentDirectory
-        );
-
-        renderBreadcrumbs(
-            currentDirectory
-        );
-    };
-
-    ////////////////////////////////////////////////////////
-
-    container.appendChild(item);
-
-    ////////////////////////////////////////////////////////
-
-    if (
-        directory.subdirectories.length > 0
-    ) {
-
-        const childrenContainer =
-            document.createElement("div");
-
-        childrenContainer.style.marginLeft =
-            "20px";
-
-        container.appendChild(
-            childrenContainer
-        );
-
-        ////////////////////////////////////////////////////
-
-        directory.subdirectories.forEach(
-            subdirectory => {
-
-                renderSidebar(
-                    subdirectory,
-                    childrenContainer
-                );
-            }
-        );
+        console.error("Error loading stats:", error);
     }
 }
 
 ////////////////////////////////////////////////////////////
-// LOAD DIRECTORY CONTENT
+// SET TABLE HEADERS
 ////////////////////////////////////////////////////////////
 
-async function loadDirectoryContent(
-    path
-) {
-
-    try {
-
-        const response =
-            await fetch(
-                `${API_URL}/directory/content?path=${path}`
-            );
-
-        const data =
-            await response.json();
-
-        renderDirectoryContent(
-            data
-        );
-
-    } catch (error) {
-
-        console.error(
-            "Error loading content:",
-            error
-        );
-    }
-}
-
-////////////////////////////////////////////////////////////
-// SEARCH
-////////////////////////////////////////////////////////////
-
-async function searchFiles(query) {
-
-    try {
-
-        ////////////////////////////////////////////////////
-        // SEARCH BY TAG
-        ////////////////////////////////////////////////////
-
-        if (query.startsWith("#")) {
-
-            const tag =
-                query.replace("#", "");
-
-            const response =
-                await fetch(
-                    `${API_URL}/search/tag?tag=${tag}`
-                );
-
-            const results =
-                await response.json();
-
-            renderSearchResults(
-                results
-            );
-
-            return;
-        }
-
-        ////////////////////////////////////////////////////
-        // SEARCH BY FILE NAME
-        ////////////////////////////////////////////////////
-
-        const response =
-            await fetch(
-                `${API_URL}/search/file?name=${query}`
-            );
-
-        const data =
-            await response.json();
-
-        ////////////////////////////////////////////////////
-
-        if (data.error) {
-
-            renderSearchResults([]);
-
-            return;
-        }
-
-        renderSearchResults([
-            data.file
-        ]);
-
-    } catch (error) {
-
-        console.error(
-            "Error searching:",
-            error
-        );
-    }
-}
-
-////////////////////////////////////////////////////////////
-// RENDER SEARCH RESULTS
-////////////////////////////////////////////////////////////
-
-function renderSearchResults(files) {
-
-    const tableBody =
-        document.getElementById(
-            "table-body"
-        );
-
-    tableBody.innerHTML = "";
-
-    ////////////////////////////////////////////////////////
-
-    if (files.length === 0) {
-
-        tableBody.innerHTML = `
-            <tr>
-                <td colspan="5">
-                    Sin resultados
-                </td>
-            </tr>
+function setTableHeaders(viewType) {
+    const thead = document.querySelector('.table-section thead tr');
+    
+    if (viewType === "recent") {
+        thead.innerHTML = `
+            <th>Archivo</th>
+            <th>Tipo</th>
+            <th>Fecha</th>
+            <th>Acción</th>
+            <th>Acciones</th>
         `;
-
-        return;
+    } else if (viewType === "trash") {
+        thead.innerHTML = `
+            <th>Archivo</th>
+            <th>Tipo</th>
+            <th>Fecha eliminación</th>
+            <th>Tamaño</th>
+            <th>Acciones</th>
+        `;
+    } else {
+        thead.innerHTML = `
+            <th>Archivo</th>
+            <th>Tipo</th>
+            <th>Fecha</th>
+            <th>Tamaño</th>
+            <th>Acciones</th>
+        `;
     }
+}
 
-    ////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+// SHOW TRASH VIEW
+////////////////////////////////////////////////////////////
 
-    files.forEach(file => {
+async function showTrashView() {
+    lastDirectory = currentDirectory;
+    
+    try {
+        setTableHeaders("trash");
 
-        const row =
-            document.createElement("tr");
+        const response = await fetch(`${API_URL}/trash`);
+        const data = await response.json();
+        const items = data.items || [];
 
-        ////////////////////////////////////////////////////
+        const tableBody = document.getElementById("table-body");
+        tableBody.innerHTML = "";
 
-        const tagsHTML =
-            (file.tags || [])
-                .map(tag => `
-                    <span class="tag-badge">
-                        #${tag}
-                    </span>
-                `)
-                .join("");
+        if (items.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="5">Papelera vacía</td></tr>`;
+            return;
+        }
 
-        ////////////////////////////////////////////////////
+        items.forEach(item => {
+            const row = document.createElement("tr");
+            const deletedDate = new Date(item.deleted_at).toLocaleString("es-ES");
+            const sizeText = item.size ? `${(item.size / 1024).toFixed(2)} KB` : "--";
 
-        row.innerHTML = `
-            <td>
-
-                <div class="file-info-column">
-
+            row.innerHTML = `
+                <td>
                     <div class="file-info">
+                        <div class="file-icon"><i class="fa-regular ${item.item_type === "file" ? "fa-file" : "fa-folder"}"></i></div>
+                        ${item.name}
+                    </div>
+                </td>
+                <td>${item.item_type === "file" ? "Archivo" : "Carpeta"}</td>
+                <td>${deletedDate}</td>
+                <td>${sizeText}</td>
+                <td>
+                    <button class="restore-trash-btn" data-name="${item.name}">Restaurar</button>
+                    <button class="delete-permanent-btn" data-name="${item.name}">Eliminar</button>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
 
-                        <div class="file-icon">
-                            <i class="fa-regular fa-file"></i>
-                        </div>
+        document.getElementById("breadcrumbs").innerHTML = `<span style="font-weight:600">🗑️ Papelera (${items.length} items)</span>`;
+    } catch (error) {
+        console.error("Error loading trash view:", error);
+    }
+}
 
+////////////////////////////////////////////////////////////
+// SHOW RECENT FILES VIEW
+////////////////////////////////////////////////////////////
+
+async function showRecentFilesView() {
+    lastDirectory = currentDirectory;
+    
+    try {
+        setTableHeaders("recent");
+
+        const response = await fetch(`${API_URL}/recent/files`);
+        const data = await response.json();
+        const files = data.recent_files || [];
+
+        const tableBody = document.getElementById("table-body");
+        tableBody.innerHTML = "";
+
+        if (files.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="5">No hay archivos recientes</td></tr>`;
+            return;
+        }
+
+        files.forEach(file => {
+            const row = document.createElement("tr");
+
+            const actionText = {
+                "file_created": "Creado",
+                "uploaded": "Subido",
+                "renamed": "Renombrado",
+                "deleted": "Eliminado"
+            }[file.action] || file.action;
+
+            const formattedDate = new Date(file.timestamp).toLocaleString("es-ES");
+
+            row.innerHTML = `
+                <td>
+                    <div class="file-info">
+                        <div class="file-icon"><i class="fa-regular fa-file"></i></div>
                         ${file.name}
-
                     </div>
+                </td>
+                <td>Archivo</td>
+                <td>${formattedDate}</td>
+                <td>${actionText}</td>
+                <td><button class="recent-view-btn" data-name="${file.name}">Ver</button></td>
+            `;
+            tableBody.appendChild(row);
+        });
 
-                    <div class="tags-container">
+        document.querySelectorAll('.recent-view-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                navigateToRecentFile(btn.dataset.name);
+            });
+        });
 
-                        ${tagsHTML}
-
-                    </div>
-
-                </div>
-
-            </td>
-
-            <td>Archivo</td>
-
-            <td>
-                ${file.uploaded_at || "--"}
-            </td>
-
-            <td>
-                ${
-                    file.size
-                        ? (file.size / 1024).toFixed(2) + " KB"
-                        : "--"
-                }
-            </td>
-
-            <td>Resultado</td>
-        `;
-
-        ////////////////////////////////////////////////////
-
-        tableBody.appendChild(row);
-    });
+        document.getElementById("breadcrumbs").innerHTML = `<span style="font-weight:600">🕐 Archivos recientes (últimos ${files.length})</span>`;
+    } catch (error) {
+        console.error("Error loading recent view:", error);
+    }
 }
 
 ////////////////////////////////////////////////////////////
@@ -444,219 +328,89 @@ function renderSearchResults(files) {
 ////////////////////////////////////////////////////////////
 
 function renderDirectoryContent(data) {
+    if (currentView === "dashboard" || currentView === "directories") {
+        setTableHeaders("dashboard");
+    }
 
-    const tableBody =
-        document.getElementById(
-            "table-body"
-        );
-
+    const tableBody = document.getElementById("table-body");
+    if (!tableBody) return;
     tableBody.innerHTML = "";
 
-    ////////////////////////////////////////////////////////
-    // DIRECTORIES VIEW
-    ////////////////////////////////////////////////////////
-
     if (currentView === "directories") {
-
-        renderOnlyDirectories(
-            data.directories
-        );
-
+        renderOnlyDirectories(data.directories);
+        return;
+    }
+    
+    if (currentView === "trash" || currentView === "recent") {
         return;
     }
 
-    ////////////////////////////////////////////////////////
-    // EMPTY STATE
-    ////////////////////////////////////////////////////////
-
-    if (
-        data.directories.length === 0 &&
-        data.files.length === 0
-    ) {
-
-        tableBody.innerHTML = `
-            <tr>
-                <td colspan="5">
-                    Directorio vacío
-                </td>
-            </tr>
-        `;
-
+    if (data.directories.length === 0 && data.files.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="5">Directorio vacío</td></tr>`;
         return;
     }
 
-    ////////////////////////////////////////////////////////
-    // DIRECTORIES
-    ////////////////////////////////////////////////////////
-
+    // Directorios
     data.directories.forEach(directory => {
+        const row = document.createElement("tr");
+        row.style.cursor = "pointer";
 
-        const row =
-            document.createElement("tr");
-
-        row.style.cursor =
-            "pointer";
-
-        ////////////////////////////////////////////////////
-
-        const createdDate = new Date(
-            directory.created_at
-        ).toLocaleDateString("es-ES");
-
-        const sizeKB = (
-            directory.size / 1024
-        ).toFixed(2);
-
-        ////////////////////////////////////////////////////
+        const createdDate = new Date(directory.created_at).toLocaleDateString("es-ES");
+        const sizeKB = (directory.size / 1024).toFixed(2);
 
         row.innerHTML = `
             <td>
-
                 <div class="file-info">
-
-                    <div class="file-icon">
-                        <i class="fa-regular fa-folder"></i>
-                    </div>
-
+                    <div class="file-icon"><i class="fa-regular fa-folder"></i></div>
                     ${directory.name}
-
                 </div>
-
             </td>
-
             <td>Carpeta</td>
-
+            <td>${createdDate}</td>
+            <td>${sizeKB} KB</td>
             <td>
-                ${createdDate}
-            </td>
-
-            <td>
-                ${sizeKB} KB
-            </td>
-
-            <td>
-
-                <button class="rename-directory-btn">
-                    Renombrar
-                </button>
-
-                <button class="rename-directory-btn" data-dir-name="${directory.name}">
-                    Renombrar
-                </button>
-
-                <button class="delete-directory-btn" data-dir-name="${directory.name}">
-                    Eliminar
-                </button>
-
+                <button class="rename-directory-btn" data-dir-name="${directory.name}">Renombrar</button>
+                <button class="delete-directory-btn" data-dir-name="${directory.name}">Eliminar</button>
             </td>
         `;
 
-        ////////////////////////////////////////////////////
-
-        row.onclick = async () => {
-
-            currentDirectory =
-                directory.path;
-
-            await loadDirectoryContent(
-                currentDirectory
-            );
-
-            renderBreadcrumbs(
-                currentDirectory
-            );
+        row.onclick = (e) => {
+            if (e.target.tagName === 'BUTTON') return;
+            currentDirectory = directory.path;
+            lastDirectory = currentDirectory;
+            currentView = "dashboard";
+            loadDirectoryContent(currentDirectory);
+            renderBreadcrumbs(currentDirectory);
         };
-
-        ////////////////////////////////////////////////////
 
         tableBody.appendChild(row);
     });
 
-    ////////////////////////////////////////////////////////
-    // FILES
-    ////////////////////////////////////////////////////////
-
+    // Archivos
     data.files.forEach(file => {
-
-        const row =
-            document.createElement("tr");
-
-        ////////////////////////////////////////////////////
-
-        const tagsHTML =
-            (file.tags || [])
-                .map(tag => `
-                    <span class="tag-badge">
-                        #${tag}
-                    </span>
-                `)
-                .join("");
-
-        ////////////////////////////////////////////////////
-
-        const uploadedDate = new Date(
-            file.uploaded_at
-        ).toLocaleDateString("es-ES");
-
-        ////////////////////////////////////////////////////
+        const row = document.createElement("tr");
+        const tagsHTML = (file.tags || []).map(tag => `<span class="tag-badge">#${tag}</span>`).join("");
+        const uploadedDate = new Date(file.uploaded_at).toLocaleDateString("es-ES");
 
         row.innerHTML = `
             <td>
-
                 <div class="file-info-column">
-
                     <div class="file-info">
-
-                        <div class="file-icon">
-                            <i class="fa-regular fa-file"></i>
-                        </div>
-
+                        <div class="file-icon"><i class="fa-regular fa-file"></i></div>
                         ${file.name}
-
                     </div>
-
-                    <div class="tags-container">
-
-                        ${tagsHTML}
-
-                    </div>
-
+                    <div class="tags-container">${tagsHTML}</div>
                 </div>
-
             </td>
-
             <td>Archivo</td>
-
+            <td>${uploadedDate}</td>
+            <td>${file.size ? (file.size / 1024).toFixed(2) + " KB" : "--"}</td>
             <td>
-                ${uploadedDate}
-            </td>
-
-            <td>
-                ${
-                    file.size
-                        ? (file.size / 1024).toFixed(2) + " KB"
-                        : "--"
-                }
-            </td>
-
-            <td>
-
-                <button class="edit-tags-btn" data-file-name="${file.name}">
-                    Tags
-                </button>
-
-                <button class="rename-file-btn">
-                    Renombrar
-                </button>
-
-                <button class="delete-file-btn">
-                    Eliminar
-                </button>
-
+                <button class="edit-tags-btn" data-file-name="${file.name}">Tags</button>
+                <button class="rename-file-btn" data-file-name="${file.name}">Renombrar</button>
+                <button class="delete-file-btn" data-file-name="${file.name}">Eliminar</button>
             </td>
         `;
-
-        ////////////////////////////////////////////////////
 
         tableBody.appendChild(row);
     });
@@ -666,102 +420,42 @@ function renderDirectoryContent(data) {
 // RENDER ONLY DIRECTORIES
 ////////////////////////////////////////////////////////////
 
-function renderOnlyDirectories(
-    directories
-) {
-
-    const tableBody =
-        document.getElementById(
-            "table-body"
-        );
-
+function renderOnlyDirectories(directories) {
+    const tableBody = document.getElementById("table-body");
     tableBody.innerHTML = "";
 
-    ////////////////////////////////////////////////////////
-
     if (directories.length === 0) {
-
-        tableBody.innerHTML = `
-            <tr>
-                <td colspan="5">
-                    No hay directorios
-                </td>
-            </tr>
-        `;
-
+        tableBody.innerHTML = `<tr><td colspan="5">No hay directorios</td></tr>`;
         return;
     }
 
-    ////////////////////////////////////////////////////////
-
     directories.forEach(directory => {
+        const row = document.createElement("tr");
+        row.style.cursor = "pointer";
 
-        const row =
-            document.createElement("tr");
-
-        row.style.cursor =
-            "pointer";
-
-        ////////////////////////////////////////////////////
-
-        const createdDate = new Date(
-            directory.created_at
-        ).toLocaleDateString("es-ES");
-
-        const sizeKB = (
-            directory.size / 1024
-        ).toFixed(2);
-
-        ////////////////////////////////////////////////////
+        const createdDate = new Date(directory.created_at).toLocaleDateString("es-ES");
+        const sizeKB = (directory.size / 1024).toFixed(2);
 
         row.innerHTML = `
             <td>
-
                 <div class="file-info">
-
-                    <div class="file-icon">
-                        <i class="fa-regular fa-folder"></i>
-                    </div>
-
+                    <div class="file-icon"><i class="fa-regular fa-folder"></i></div>
                     ${directory.name}
-
                 </div>
-
             </td>
-
             <td>Carpeta</td>
-
-            <td>
-                ${createdDate}
-            </td>
-
-            <td>
-                ${sizeKB} KB
-            </td>
-
+            <td>${createdDate}</td>
+            <td>${sizeKB} KB</td>
             <td>Carpeta</td>
         `;
 
-        ////////////////////////////////////////////////////
-
         row.onclick = async () => {
-
-            currentDirectory =
-                directory.path;
-
-            currentView =
-                "dashboard";
-
-            await loadDirectoryContent(
-                currentDirectory
-            );
-
-            renderBreadcrumbs(
-                currentDirectory
-            );
+            currentDirectory = directory.path;
+            lastDirectory = currentDirectory;
+            currentView = "dashboard";
+            await loadDirectoryContent(currentDirectory);
+            renderBreadcrumbs(currentDirectory);
         };
-
-        ////////////////////////////////////////////////////
 
         tableBody.appendChild(row);
     });
@@ -772,1048 +466,612 @@ function renderOnlyDirectories(
 ////////////////////////////////////////////////////////////
 
 function renderBreadcrumbs(path) {
-
-    const container =
-        document.getElementById(
-            "breadcrumbs"
-        );
-
+    const container = document.getElementById("breadcrumbs");
     container.innerHTML = "";
 
-    ////////////////////////////////////////////////////////
-
-    const parts =
-        path.split("/");
-
-    ////////////////////////////////////////////////////////
+    const parts = path.split("/");
 
     parts.forEach((part, index) => {
+        const pathParts = parts.slice(0, index + 1);
+        const breadcrumbPath = pathParts.join("/");
 
-        const pathParts =
-            parts.slice(0, index + 1);
-
-        const breadcrumbPath =
-            pathParts.join("/");
-
-        ////////////////////////////////////////////////////
-
-        const crumb =
-            document.createElement("span");
-
-        crumb.textContent =
-            part;
-
-        crumb.style.cursor =
-            "pointer";
-
-        crumb.style.fontWeight =
-            "600";
-
-        crumb.style.marginRight =
-            "8px";
-
-        ////////////////////////////////////////////////////
+        const crumb = document.createElement("span");
+        crumb.textContent = part;
+        crumb.style.cursor = "pointer";
+        crumb.style.fontWeight = "600";
+        crumb.style.marginRight = "8px";
 
         crumb.onclick = async () => {
-
-            currentDirectory =
-                breadcrumbPath;
-
-            await loadDirectoryContent(
-                currentDirectory
-            );
-
-            renderBreadcrumbs(
-                currentDirectory
-            );
+            currentDirectory = breadcrumbPath;
+            lastDirectory = currentDirectory;
+            currentView = "dashboard";
+            await loadDirectoryContent(currentDirectory);
+            renderBreadcrumbs(currentDirectory);
         };
-
-        ////////////////////////////////////////////////////
 
         container.appendChild(crumb);
 
-        ////////////////////////////////////////////////////
-
-        if (
-            index < parts.length - 1
-        ) {
-
-            const separator =
-                document.createElement("span");
-
-            separator.textContent =
-                "/";
-
-            separator.style.marginRight =
-                "8px";
-
-            container.appendChild(
-                separator
-            );
+        if (index < parts.length - 1) {
+            const separator = document.createElement("span");
+            separator.textContent = "/";
+            separator.style.marginRight = "8px";
+            container.appendChild(separator);
         }
     });
 }
+
 ////////////////////////////////////////////////////////////
-// UPLOAD REAL FILE
+// SEARCH FILES
+////////////////////////////////////////////////////////////
+
+async function searchFiles(query) {
+    try {
+        if (query.startsWith("#")) {
+            const tag = query.replace("#", "");
+            const response = await fetch(`${API_URL}/search/tag?tag=${tag}`);
+            const results = await response.json();
+            renderSearchResults(results);
+            return;
+        }
+
+        const response = await fetch(`${API_URL}/search/file?name=${query}`);
+        const data = await response.json();
+
+        if (data.error) {
+            renderSearchResults([]);
+            return;
+        }
+
+        renderSearchResults([data.file]);
+    } catch (error) {
+        console.error("Error searching:", error);
+    }
+}
+
+////////////////////////////////////////////////////////////
+// RENDER SEARCH RESULTS
+////////////////////////////////////////////////////////////
+
+function renderSearchResults(files) {
+    const tableBody = document.getElementById("table-body");
+    tableBody.innerHTML = "";
+
+    if (files.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="5">Sin resultados</td></tr>`;
+        return;
+    }
+
+    files.forEach(file => {
+        const row = document.createElement("tr");
+        const tagsHTML = (file.tags || []).map(tag => `<span class="tag-badge">#${tag}</span>`).join("");
+
+        row.innerHTML = `
+            <td>
+                <div class="file-info-column">
+                    <div class="file-info">
+                        <div class="file-icon"><i class="fa-regular fa-file"></i></div>
+                        ${file.name}
+                    </div>
+                    <div class="tags-container">${tagsHTML}</div>
+                </div>
+            </td>
+            <td>Archivo</td>
+            <td>${file.uploaded_at || "--"}</td>
+            <td>${file.size ? (file.size / 1024).toFixed(2) + " KB" : "--"}</td>
+            <td>Resultado</td>
+        `;
+        tableBody.appendChild(row);
+    });
+}
+
+////////////////////////////////////////////////////////////
+// UPLOAD FILE
 ////////////////////////////////////////////////////////////
 
 async function uploadFile(file) {
-
-    const tagsInput = prompt(
-        "Tags separadas por coma\nEjemplo: urgente,imagen,trabajo"
-    );
+    // Guardar la carpeta actual ANTES de cualquier cosa
+    const savedDirectory = currentDirectory;
+    console.log("📁 Carpeta actual guardada:", savedDirectory);
+    
+    const tagsInput = prompt("Tags separadas por coma\nEjemplo: urgente,imagen,trabajo");
 
     try {
+        const formData = new FormData();
+        formData.append("uploaded_file", file);
 
-        const formData =
-            new FormData();
+        const response = await fetch(`${API_URL}/upload?path=${encodeURIComponent(savedDirectory)}&tags=${encodeURIComponent(tagsInput || "")}`, {
+            method: "POST",
+            body: formData
+        });
 
-        formData.append(
-            "uploaded_file",
-            file
-        );
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
 
-        ////////////////////////////////////////////////////
+        const result = await response.json();
+        console.log("✅ Subida exitosa:", result);
 
-        const response =
-            await fetch(
-                `${API_URL}/upload?path=${currentDirectory}&tags=${tagsInput || ""}`,
-                {
-                    method: "POST",
-                    body: formData
-                }
-            );
-
-        ////////////////////////////////////////////////////
-
-        const result =
-            await response.json();
-
-        console.log(result);
-
-        ////////////////////////////////////////////////////
-
-        await loadDirectoryContent(
-            currentDirectory
-        );
-
+        // IMPORTANTE: Prevenir cualquier recarga
+        event?.preventDefault?.();
+        
+        // Restaurar carpeta
+        currentDirectory = savedDirectory;
+        lastDirectory = savedDirectory;
+        
+        // Recargar contenido SIN recargar página
+        await loadDirectoryContent(currentDirectory);
         await loadStats();
-
+        await loadRecentCount();
+        
+        console.log("✅ Todo actualizado - Carpeta:", currentDirectory);
+        
     } catch (error) {
-
-        console.error(
-            "Error uploading file:",
-            error
-        );
+        console.error("❌ Error en upload:", error);
+        alert("Error al subir el archivo: " + error.message);
     }
 }
-/////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
 // CRUD OPERATIONS
 ////////////////////////////////////////////////////////////
 
 async function createDirectory(name) {
-
+    const savedDirectory = currentDirectory;
+    
     try {
+        const response = await fetch(`${API_URL}/directory`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ parent: savedDirectory, name: name })
+        });
 
-        const response =
-            await fetch(
-                `${API_URL}/directory`,
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body: JSON.stringify({
-                        parent: currentDirectory,
-
-                        name: name
-                    })
-                }
-            );
-
-        ////////////////////////////////////////////////////
-
-        const result =
-            await response.json();
-
+        const result = await response.json();
         if (result.message) {
-
-            await loadDirectoryContent(
-                currentDirectory
-            );
-
-            await loadTree();
-
+            currentDirectory = savedDirectory;
+            lastDirectory = savedDirectory;
+            await loadDirectoryContent(currentDirectory);
+            await refreshSidebar();
             await loadStats();
         }
-
     } catch (error) {
-
-        console.error(
-            "Error creating directory:",
-            error
-        );
-
-        alert(
-            "Error al crear la carpeta"
-        );
+        console.error("Error creating directory:", error);
+        alert("Error al crear la carpeta");
     }
 }
 
 async function createFile(name) {
+    const savedDirectory = currentDirectory;
 
     try {
+        const response = await fetch(`${API_URL}/file`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ directory: savedDirectory, name: name, tags: [] })
+        });
 
-        const response =
-            await fetch(
-                `${API_URL}/file`,
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body: JSON.stringify({
-                        directory:
-                            currentDirectory,
-
-                        name: name,
-
-                        tags: []
-                    })
-                }
-            );
-
-        ////////////////////////////////////////////////////
-
-        const result =
-            await response.json();
-
+        const result = await response.json();
         if (result.message) {
+            currentDirectory = savedDirectory;
+            lastDirectory = savedDirectory;
+            await loadDirectoryContent(currentDirectory);
+            await loadStats();
+            await loadRecentCount();
+            console.log("Archivo creado correctamente - Carpeta:", currentDirectory);
+        }
+    } catch (error) {
+        console.error("Error creating file:", error);
+        alert("Error al crear el archivo");
+    }
+}
 
-            await loadDirectoryContent(
-                currentDirectory
-            );
+async function renameDirectory(oldName, newName) {
+    const savedDirectory = currentDirectory;
 
+    try {
+        const response = await fetch(`${API_URL}/directory/rename`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ path: savedDirectory, old_name: oldName, new_name: newName })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            currentDirectory = savedDirectory;
+            lastDirectory = savedDirectory;
+            await loadDirectoryContent(currentDirectory);
+            await refreshSidebar();
             await loadStats();
         }
-
     } catch (error) {
-
-        console.error(
-            "Error creating file:",
-            error
-        );
-
-        alert(
-            "Error al crear el archivo"
-        );
+        console.error("Error renaming directory:", error);
+        alert("Error al renombrar la carpeta");
     }
 }
 
-async function renameDirectory(
-    oldName,
-    newName
-) {
+async function renameFile(oldName, newName) {
+    const savedDirectory = currentDirectory;
 
     try {
+        const response = await fetch(`${API_URL}/file/rename`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ path: savedDirectory, old_name: oldName, new_name: newName })
+        });
 
-        console.log('renameDirectory called', { oldName, newName, currentDirectory });
-
-        const response =
-            await fetch(
-                `${API_URL}/directory/rename`,
-                {
-                    method: "PUT",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body: JSON.stringify({
-                        path: currentDirectory,
-
-                        old_name: oldName,
-
-                        new_name: newName
-                    })
-                }
-            );
-
-        ////////////////////////////////////////////////////
-
-        const result =
-            await response.json();
-
-        console.log('renameDirectory response', result);
-
+        const result = await response.json();
         if (result.success) {
-
-            await loadDirectoryContent(
-                currentDirectory
-            );
-
-            await loadTree();
+            currentDirectory = savedDirectory;
+            lastDirectory = savedDirectory;
+            await loadDirectoryContent(currentDirectory);
+            await loadStats();
+            await loadRecentCount();
         }
-
     } catch (error) {
-
-        console.error(
-            "Error renaming directory:",
-            error
-        );
-
-        alert(
-            "Error al renombrar la carpeta"
-        );
-    }
-}
-
-async function renameFile(
-    oldName,
-    newName
-) {
-
-    try {
-
-        const response =
-            await fetch(
-                `${API_URL}/file/rename`,
-                {
-                    method: "PUT",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body: JSON.stringify({
-                        path: currentDirectory,
-
-                        old_name: oldName,
-
-                        new_name: newName
-                    })
-                }
-            );
-
-        ////////////////////////////////////////////////////
-
-        const result =
-            await response.json();
-
-        if (result.success) {
-
-            await loadDirectoryContent(
-                currentDirectory
-            );
-        }
-
-    } catch (error) {
-
-        console.error(
-            "Error renaming file:",
-            error
-        );
-
-        alert(
-            "Error al renombrar el archivo"
-        );
+        console.error("Error renaming file:", error);
+        alert("Error al renombrar el archivo");
     }
 }
 
 async function deleteDirectory(name) {
+    if (!confirm(`¿Eliminar carpeta "${name}"?`)) return;
 
-    if (!confirm(
-        `¿Eliminar carpeta "${name}"?`
-    )) return;
+    const savedDirectory = currentDirectory;
 
     try {
+        const response = await fetch(`${API_URL}/directory?path=${savedDirectory}&name=${name}`, {
+            method: "DELETE"
+        });
 
-        const response =
-            await fetch(
-                `${API_URL}/directory?path=${currentDirectory}&name=${name}`,
-                {
-                    method: "DELETE"
-                }
-            );
-
-        ////////////////////////////////////////////////////
-
-        const result =
-            await response.json();
-
+        const result = await response.json();
         if (result.success) {
-
-            await loadDirectoryContent(
-                currentDirectory
-            );
-
-            await loadTree();
-
+            currentDirectory = savedDirectory;
+            lastDirectory = savedDirectory;
+            await loadDirectoryContent(currentDirectory);
+            await refreshSidebar();
             await loadStats();
-
             await loadTrashCount();
+            console.log("Carpeta eliminada");
         }
-
     } catch (error) {
-
-        console.error(
-            "Error deleting directory:",
-            error
-        );
-
-        alert(
-            "Error al eliminar la carpeta"
-        );
+        console.error("Error deleting directory:", error);
+        alert("Error al eliminar la carpeta");
     }
 }
 
 async function deleteFile(name) {
+    if (!confirm(`¿Eliminar archivo "${name}"?`)) return;
 
-    if (!confirm(
-        `¿Eliminar archivo "${name}"?`
-    )) return;
+    const savedDirectory = currentDirectory;
 
     try {
+        const response = await fetch(`${API_URL}/file?path=${savedDirectory}&name=${name}`, {
+            method: "DELETE"
+        });
 
-        const response =
-            await fetch(
-                `${API_URL}/file?path=${currentDirectory}&name=${name}`,
-                {
-                    method: "DELETE"
-                }
-            );
-
-        ////////////////////////////////////////////////////
-
-        const result =
-            await response.json();
-
+        const result = await response.json();
         if (result.success) {
-
-            await loadDirectoryContent(
-                currentDirectory
-            );
-
+            currentDirectory = savedDirectory;
+            lastDirectory = savedDirectory;
+            await loadDirectoryContent(currentDirectory);
             await loadStats();
-
             await loadTrashCount();
+            await loadRecentCount();
+            console.log("Archivo eliminado");
         }
-
     } catch (error) {
-
-        console.error(
-            "Error deleting file:",
-            error
-        );
-
-        alert(
-            "Error al eliminar el archivo"
-        );
+        console.error("Error deleting file:", error);
+        alert("Error al eliminar el archivo");
     }
 }
 
-/////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
+// NAVIGATE TO RECENT FILE
+////////////////////////////////////////////////////////////
+
+async function navigateToRecentFile(fileName) {
+    try {
+        const btn = event?.target;
+        const originalText = btn?.textContent;
+        if (btn) btn.textContent = "🔍 Buscando...";
+
+        const searchResponse = await fetch(`${API_URL}/search/file?name=${encodeURIComponent(fileName)}`);
+        const searchData = await searchResponse.json();
+
+        if (searchData.error || !searchData.file) {
+            alert(`❌ Archivo "${fileName}" no encontrado`);
+            if (btn) btn.textContent = originalText;
+            return;
+        }
+
+        const location = await findFileLocation(fileName);
+
+        if (location) {
+            currentDirectory = location;
+            lastDirectory = location;
+            currentView = "dashboard";
+            setTableHeaders("dashboard");
+            await loadDirectoryContent(currentDirectory);
+            renderBreadcrumbs(currentDirectory);
+
+            setTimeout(() => highlightFileInTable(fileName), 500);
+            alert(`✅ Archivo encontrado en: ${location}`);
+        } else {
+            currentDirectory = "root";
+            lastDirectory = "root";
+            await loadDirectoryContent("root");
+            renderBreadcrumbs("root");
+            alert(`⚠️ Archivo encontrado en la raíz`);
+        }
+
+        if (btn) btn.textContent = originalText;
+    } catch (error) {
+        console.error("Error navigating to file:", error);
+        alert("❌ Error al navegar al archivo");
+    }
+}
+
+async function findFileLocation(fileName, node = null, currentPath = "root") {
+    if (!node) {
+        const treeResponse = await fetch(`${API_URL}/tree`);
+        node = await treeResponse.json();
+    }
+
+    if (node.files_data) {
+        for (const file of node.files_data) {
+            if (file.name === fileName) return currentPath;
+        }
+    }
+
+    if (node.subdirectories) {
+        for (const subdir of node.subdirectories) {
+            const newPath = currentPath === "root" ? `root/${subdir.name}` : `${currentPath}/${subdir.name}`;
+            const result = await findFileLocation(fileName, subdir, newPath);
+            if (result) return result;
+        }
+    }
+
+    return null;
+}
+
+function highlightFileInTable(fileName) {
+    const rows = document.querySelectorAll('#table-body tr');
+    for (const row of rows) {
+        if (row.textContent.includes(fileName)) {
+            row.style.transition = "background-color 0.3s";
+            row.style.backgroundColor = "#3b82f633";
+            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => row.style.backgroundColor = "", 3000);
+            break;
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////
 // TAGS MODAL
 ////////////////////////////////////////////////////////////
 
 function openTagsModal(fileName, tags) {
-
     currentEditingFile = fileName;
-
     currentEditingTags = [...tags];
 
-    const tagsList =
-        document.getElementById("tags-list");
-
+    const tagsList = document.getElementById("tags-list");
     tagsList.innerHTML = "";
 
-    ////////////////////////////////////////////////////////
-
     currentEditingTags.forEach(tag => {
-
-        const tagItem =
-            document.createElement("div");
-
+        const tagItem = document.createElement("div");
         tagItem.className = "tag-item";
-
-        tagItem.innerHTML = `
-            ${tag}
-            <button
-                class="tag-remove-btn"
-                data-tag="${tag}"
-            >
-                ×
-            </button>
-        `;
-
+        tagItem.innerHTML = `${tag}<button class="tag-remove-btn" data-tag="${tag}">×</button>`;
         tagsList.appendChild(tagItem);
 
-        ////////////////////////////////////////////////////
-
-        const removeBtn = tagItem.querySelector(
-            ".tag-remove-btn"
-        );
-
-        removeBtn.addEventListener(
-            "click",
-            () => {
-
-                currentEditingTags =
-                    currentEditingTags.filter(
-                        t => t !== tag
-                    );
-
-                openTagsModal(
-                    fileName,
-                    currentEditingTags
-                );
-            }
-        );
+        const removeBtn = tagItem.querySelector(".tag-remove-btn");
+        removeBtn.addEventListener("click", () => {
+            currentEditingTags = currentEditingTags.filter(t => t !== tag);
+            openTagsModal(fileName, currentEditingTags);
+        });
     });
 
-    ////////////////////////////////////////////////////////
-
-    document.getElementById(
-        "tags-modal"
-    ).classList.add("show");
-
-    document.getElementById(
-        "tag-input"
-    ).focus();
+    document.getElementById("tags-modal").classList.add("show");
+    document.getElementById("tag-input").focus();
 }
 
 function closeTagsModal() {
-
-    document.getElementById(
-        "tags-modal"
-    ).classList.remove("show");
-
+    document.getElementById("tags-modal").classList.remove("show");
     currentEditingFile = null;
-
     currentEditingTags = [];
 }
 
 async function saveFileTags() {
-
     if (!currentEditingFile) return;
 
+    const savedDirectory = currentDirectory;
+
     try {
+        const response = await fetch(`${API_URL}/file/tags`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                path: savedDirectory,
+                file_name: currentEditingFile,
+                tags: currentEditingTags
+            })
+        });
 
-        const response =
-            await fetch(
-                `${API_URL}/file/tags`,
-                {
-                    method: "PUT",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body: JSON.stringify({
-                        path: currentDirectory,
-
-                        file_name:
-                            currentEditingFile,
-
-                        tags:
-                            currentEditingTags
-                    })
-                }
-            );
-
-        ////////////////////////////////////////////////////
-
-        const result =
-            await response.json();
-
+        const result = await response.json();
         if (result.success) {
-
             closeTagsModal();
-
-            await loadDirectoryContent(
-                currentDirectory
-            );
+            currentDirectory = savedDirectory;
+            lastDirectory = savedDirectory;
+            await loadDirectoryContent(currentDirectory);
+            await loadStats();
         }
-
     } catch (error) {
-
-        console.error(
-            "Error saving tags:",
-            error
-        );
+        console.error("Error saving tags:", error);
+        alert("Error al guardar etiquetas");
     }
 }
 
-/////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
 // INIT
 ////////////////////////////////////////////////////////////
 
-document.addEventListener(
-    "DOMContentLoaded",
-    () => {
-
-        ////////////////////////////////////////////////////
-        // INITIAL LOAD
-        ////////////////////////////////////////////////////
-
-        loadTree();
-
-        loadDirectoryContent(
-            currentDirectory
-        );
-
-        loadStats();
-
-        loadTrashCount();
-
-        renderBreadcrumbs(
-            currentDirectory
-        );
-
-        ////////////////////////////////////////////////////
-        // CREATE DIRECTORY
-        ////////////////////////////////////////////////////
-
-        const newFolderButton =
-            document.getElementById(
-                "new-folder-btn"
-            );
-
-        newFolderButton.addEventListener(
-            "click",
-            async () => {
-
-                const name = prompt(
-                    "Nombre de la carpeta"
-                );
-
-                if (!name) return;
-
-                await createDirectory(
-                    name
-                );
-            }
-        );
-
-        ////////////////////////////////////////////////////
-        // CREATE FILE
-        ////////////////////////////////////////////////////
-
-        const createFileButton =
-            document.getElementById(
-                "create-file-btn"
-            );
-
-        createFileButton.addEventListener(
-            "click",
-            async () => {
-
-                const name = prompt(
-                    "Nombre del archivo"
-                );
-
-                if (!name) return;
-
-                await createFile(
-                    name
-                );
-            }
-        );
-
-        ////////////////////////////////////////////////////
-        // UPLOAD
-        ////////////////////////////////////////////////////
-
-        const uploadInput =
-            document.getElementById(
-                "file-input"
-            );
-
-        uploadInput.addEventListener(
-            "change",
-            async (event) => {
-
-                const file =
-                    event.target.files[0];
-
-                if (!file) return;
-
-                await uploadFile(file);
-            }
-        );
-
-        ////////////////////////////////////////////////////
-        // SEARCH
-        ////////////////////////////////////////////////////
-
-        const searchInput =
-            document.querySelector(
-                ".search-box input"
-            );
-
-        searchInput.addEventListener(
-            "keydown",
-            async (event) => {
-
-                if (event.key !== "Enter")
-                    return;
-
-                const query =
-                    searchInput.value.trim();
-
-                ////////////////////////////////////////////////////
-
-                if (!query) {
-
-                    await loadDirectoryContent(
-                        currentDirectory
-                    );
-
-                    return;
-                }
-
-                ////////////////////////////////////////////////////
-
-                await searchFiles(
-                    query
-                );
-            }
-        );
-
-        ////////////////////////////////////////////////////
-        // RECENT FILES CARD
-        ////////////////////////////////////////////////////
-
-        document.getElementById(
-            "recent-files-card"
-        ).addEventListener(
-            "click",
-            async () => {
-
-                currentView =
-                    "dashboard";
-
-                await loadDirectoryContent(
-                    currentDirectory
-                );
-            }
-        );
-
-        ////////////////////////////////////////////////////
-        // TRASH CARD
-        ////////////////////////////////////////////////////
-
-        document.getElementById(
-            "trash-card"
-        ).addEventListener(
-            "click",
-            async () => {
-
-                alert(
-                    "Papelera en desarrollo"
-                );
-            }
-        );
-
-        ////////////////////////////////////////////////////
-        // SIDEBAR BUTTONS
-        ////////////////////////////////////////////////////
-
-        const dashboardButton =
-            document.getElementById(
-                "dashboard-view-btn"
-            );
-
-        const directoriesButton =
-            document.getElementById(
-                "directories-view-btn"
-            );
-
-        ////////////////////////////////////////////////////
-        // DASHBOARD VIEW
-        ////////////////////////////////////////////////////
-
-        dashboardButton.addEventListener(
-            "click",
-            async () => {
-
-                currentView =
-                    "dashboard";
-
-                dashboardButton.classList.add(
-                    "active"
-                );
-
-                directoriesButton.classList.remove(
-                    "active"
-                );
-
-                await loadDirectoryContent(
-                    currentDirectory
-                );
-            }
-        );
-
-        ////////////////////////////////////////////////////
-        // DIRECTORIES VIEW
-        ////////////////////////////////////////////////////
-
-        directoriesButton.addEventListener(
-            "click",
-            async () => {
-
-                currentView =
-                    "directories";
-
-                directoriesButton.classList.add(
-                    "active"
-                );
-
-                dashboardButton.classList.remove(
-                    "active"
-                );
-
-                await loadDirectoryContent(
-                    currentDirectory
-                );
-            }
-        );
-
-        ////////////////////////////////////////////////////
-        // TAGS MODAL
-        ////////////////////////////////////////////////////
-
-        document.getElementById(
-            "close-tags-modal"
-        ).addEventListener(
-            "click",
-            closeTagsModal
-        );
-
-        document.getElementById(
-            "cancel-tags-btn"
-        ).addEventListener(
-            "click",
-            closeTagsModal
-        );
-
-        document.getElementById(
-            "save-tags-btn"
-        ).addEventListener(
-            "click",
-            saveFileTags
-        );
-
-        document.getElementById(
-            "tag-input"
-        ).addEventListener(
-            "keydown",
-            (event) => {
-
-                if (event.key !== "Enter")
-                    return;
-
-                const input =
-                    document.getElementById(
-                        "tag-input"
-                    );
-
-                const tag =
-                    input.value.trim()
-                        .toLowerCase();
-
-                if (!tag) return;
-
-                if (!currentEditingTags
-                    .includes(tag)) {
-
-                    currentEditingTags.push(
-                        tag
-                    );
-                }
-
-                input.value = "";
-
-                openTagsModal(
-                    currentEditingFile,
-                    currentEditingTags
-                );
-            }
-        );
-
-        ////////////////////////////////////////////////////
-        // TABLE DELEGATION - EDIT TAGS
-        ////////////////////////////////////////////////////
-
-        document.getElementById(
-            "table-body"
-        ).addEventListener(
-            "click",
-            async (event) => {
-
-                const editTagsBtn =
-                    event.target.closest(
-                        ".edit-tags-btn"
-                    );
-
-                if (editTagsBtn) {
-
-                    const fileName =
-                        editTagsBtn.dataset
-                            .fileName;
-
-                    const row = editTagsBtn
-                        .closest("tr");
-
-                    const tagsSpans =
-                        row.querySelectorAll(
-                            ".tag-badge"
-                        );
-
-                    const tags = Array.from(
-                        tagsSpans
-                    ).map(span => {
-
-                        const text =
-                            span.textContent;
-
-                        return text.replace(
-                            "#",
-                            ""
-                        );
-                    });
-
-                    openTagsModal(
-                        fileName,
-                        tags
-                    );
-                }
-
-                ////////////////////////////////////////////////////
-                // RENAME DIRECTORY
-                ////////////////////////////////////////////////////
-
-                // DESPUÉS — rename directory
-const renameDirectoryBtn =
-    event.target.closest(
-        ".rename-directory-btn"
-    );
-
-    if (renameDirectoryBtn) {
-
-    event.stopPropagation(); // ← evita navegar al directorio
-
-    const row = renameDirectoryBtn
-        .closest("tr");
-
-    // Preferir el nombre en el dataset (más fiable)
-    const dirName = renameDirectoryBtn.dataset.dirName || (function(){
-        const fileInfo = row.querySelector(".file-info");
-        return Array.from(fileInfo.childNodes)
-            .filter(n => n.nodeType === Node.TEXT_NODE)
-            .map(n => n.textContent.trim())
-            .filter(Boolean)
-            .join("").trim();
-    })();
-
-    console.log('renameDirectoryBtn clicked', { dirName, currentDirectory });
-
-    const newName = prompt(
-        "Nuevo nombre de la carpeta:",
-        dirName
-    );
-
-    if (newName && newName !== dirName) {
-        await renameDirectory(dirName, newName);
-    }
-}
-
-                ////////////////////////////////////////////////////
-                // DELETE DIRECTORY
-                ////////////////////////////////////////////////////
-
-                const deleteDirectoryBtn =
-                    event.target.closest(
-                        ".delete-directory-btn"
-                    );
-
-                if (deleteDirectoryBtn) {
-                    event.stopPropagation();
-                    const row = deleteDirectoryBtn
-                        .closest("tr");
-
-                    const dirName = deleteDirectoryBtn.dataset.dirName || row.querySelector('.file-info').textContent.trim();
-
-                    await deleteDirectory(
-                        dirName
-                    );
-                }
-
-                ////////////////////////////////////////////////////
-                // RENAME FILE
-                ////////////////////////////////////////////////////
-
-                // DESPUÉS — rename file
-const renameFileBtn =
-    event.target.closest(".rename-file-btn");
-
-if (renameFileBtn) {
-
-    event.stopPropagation(); // ← añadir esto
-
-    const row = renameFileBtn.closest("tr");
-    const fileInfo = row.querySelector(".file-info");
-    const fileName = Array.from(fileInfo.childNodes)
-        .filter(n => n.nodeType === Node.TEXT_NODE)
-        .map(n => n.textContent.trim())
-        .filter(Boolean)
-        .join("").trim();
-
-    const newName = prompt("Nuevo nombre del archivo:", fileName);
-
-    if (newName && newName !== fileName) {
-        await renameFile(fileName, newName);
-    }
-}
-
-                ////////////////////////////////////////////////////
-                // DELETE FILE
-                ////////////////////////////////////////////////////
-
-                const deleteFileBtn =
-                    event.target.closest(
-                        ".delete-file-btn"
-                    );
-
-                if (deleteFileBtn) {
-                    event.stopPropagation();
-                    const row = deleteFileBtn
-                        .closest("tr");
-
-                    const fileInfo =
-                        row.querySelector(
-                            ".file-info"
-                        );
-
-                    const fileName =
-                        fileInfo.textContent
-                            .trim();
-
-                    await deleteFile(
-                        fileName
-                    );
+document.addEventListener("DOMContentLoaded", () => {
+    loadTree();
+    loadDirectoryContent(currentDirectory);
+    loadStats();
+    loadTrashCount();
+    loadRecentCount();
+    renderBreadcrumbs(currentDirectory);
+
+    // Botones
+    document.getElementById("new-folder-btn").addEventListener("click", async () => {
+        const name = prompt("Nombre de la carpeta");
+        if (name) await createDirectory(name);
+    });
+
+    document.getElementById("create-file-btn").addEventListener("click", async () => {
+        const name = prompt("Nombre del archivo");
+        if (name) await createFile(name);
+    });
+
+    document.getElementById("file-input").addEventListener("change", async (event) => {
+        const file = event.target.files[0];
+        if (file) await uploadFile(file);
+    });
+
+    document.querySelector(".search-box input").addEventListener("keydown", async (event) => {
+        if (event.key !== "Enter") return;
+        const query = event.target.value.trim();
+        if (!query) {
+            await loadDirectoryContent(currentDirectory);
+            return;
+        }
+        await searchFiles(query);
+    });
+
+    document.getElementById("recent-files-card").addEventListener("click", async () => {
+        currentView = "recent";
+        await showRecentFilesView();
+    });
+
+    document.getElementById("trash-card").addEventListener("click", async () => {
+        currentView = "trash";
+        await showTrashView();
+    });
+
+    document.getElementById("dashboard-view-btn").addEventListener("click", async () => {
+        currentView = "dashboard";
+        currentDirectory = lastDirectory;
+        
+        document.getElementById("dashboard-view-btn").classList.add("active");
+        document.getElementById("directories-view-btn").classList.remove("active");
+        
+        setTableHeaders("dashboard");
+        await loadDirectoryContent(currentDirectory);
+        renderBreadcrumbs(currentDirectory);
+    });
+
+    document.getElementById("directories-view-btn").addEventListener("click", async () => {
+        currentView = "directories";
+        currentDirectory = lastDirectory;
+        
+        document.getElementById("directories-view-btn").classList.add("active");
+        document.getElementById("dashboard-view-btn").classList.remove("active");
+        
+        setTableHeaders("dashboard");
+        await loadDirectoryContent(currentDirectory);
+    });
+
+    // Modales
+    document.getElementById("close-tags-modal").addEventListener("click", closeTagsModal);
+    document.getElementById("cancel-tags-btn").addEventListener("click", closeTagsModal);
+    document.getElementById("save-tags-btn").addEventListener("click", saveFileTags);
+
+    document.getElementById("tag-input").addEventListener("keydown", (event) => {
+        if (event.key !== "Enter") return;
+        const input = document.getElementById("tag-input");
+        const tag = input.value.trim().toLowerCase();
+        if (!tag) return;
+        if (!currentEditingTags.includes(tag)) currentEditingTags.push(tag);
+        input.value = "";
+        openTagsModal(currentEditingFile, currentEditingTags);
+    });
+
+    // Delegación de eventos
+    document.getElementById("table-body").addEventListener("click", async (event) => {
+        // Restaurar desde papelera
+        const restoreBtn = event.target.closest(".restore-trash-btn");
+        if (restoreBtn && currentView === "trash") {
+            const name = restoreBtn.dataset.name;
+            if (confirm(`¿Restaurar "${name}"?`)) {
+                const response = await fetch(`${API_URL}/trash/restore`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name: name })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    await loadDirectoryContent(currentDirectory);
+                    await refreshSidebar();
+                    await loadTrashCount();
                 }
             }
-        );
+        }
 
-    }
-);
+        // Eliminar permanentemente
+        const deletePermBtn = event.target.closest(".delete-permanent-btn");
+        if (deletePermBtn && currentView === "trash") {
+            const name = deletePermBtn.dataset.name;
+            if (confirm(`¿Eliminar permanentemente "${name}"?`)) {
+                const response = await fetch(`${API_URL}/trash/permanent?name=${name}`, { method: "DELETE" });
+                const result = await response.json();
+                if (result.success) {
+                    await showTrashView();
+                    await loadTrashCount();
+                }
+            }
+        }
+
+        // Editar tags
+        const editTagsBtn = event.target.closest(".edit-tags-btn");
+        if (editTagsBtn) {
+            const fileName = editTagsBtn.dataset.fileName;
+            const row = editTagsBtn.closest("tr");
+            const tagsSpans = row.querySelectorAll(".tag-badge");
+            const tags = Array.from(tagsSpans).map(span => span.textContent.replace("#", ""));
+            openTagsModal(fileName, tags);
+        }
+
+        // Renombrar directorio
+        const renameDirectoryBtn = event.target.closest(".rename-directory-btn");
+        if (renameDirectoryBtn) {
+            event.stopPropagation();
+            const dirName = renameDirectoryBtn.dataset.dirName;
+            const newName = prompt("Nuevo nombre de la carpeta:", dirName);
+            if (newName && newName !== dirName) await renameDirectory(dirName, newName);
+        }
+
+        // Eliminar directorio
+        const deleteDirectoryBtn = event.target.closest(".delete-directory-btn");
+        if (deleteDirectoryBtn) {
+            event.stopPropagation();
+            const dirName = deleteDirectoryBtn.dataset.dirName;
+            await deleteDirectory(dirName);
+        }
+
+        // Renombrar archivo
+        const renameFileBtn = event.target.closest(".rename-file-btn");
+        if (renameFileBtn) {
+            event.stopPropagation();
+            const fileName = renameFileBtn.dataset.fileName;
+            const newName = prompt("Nuevo nombre del archivo:", fileName);
+            if (newName && newName !== fileName) await renameFile(fileName, newName);
+        }
+
+        // Eliminar archivo
+        const deleteFileBtn = event.target.closest(".delete-file-btn");
+        if (deleteFileBtn) {
+            event.stopPropagation();
+            const fileName = deleteFileBtn.dataset.fileName;
+            await deleteFile(fileName);
+        }
+    });
+});

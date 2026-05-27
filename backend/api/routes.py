@@ -1,5 +1,4 @@
 from backend.services.system_instance import fs, trash
-from backend.models.file import File as FileModel
 
 import os
 import shutil
@@ -77,21 +76,13 @@ def create_file(data: dict):
             "error": "Directory not found"
         }
 
-    ###################################################
-    # TAGS
-    ###################################################
-
     tags = data.get("tags", [])
-
-    ###################################################
 
     fs.create_file(
         directory,
         file_name,
         tags=tags
     )
-
-    ###################################################
 
     return {
         "message": "File created successfully"
@@ -184,8 +175,6 @@ def get_directory_content(path: str):
             "error": "Directory not found"
         }
 
-    ###################################################
-
     directories = []
 
     for subdirectory in directory.subdirectories:
@@ -203,8 +192,6 @@ def get_directory_content(path: str):
             "size": subdirectory.get_total_size()
         })
 
-    ###################################################
-
     files = []
 
     for file in directory.files:
@@ -221,8 +208,6 @@ def get_directory_content(path: str):
 
             "uploaded_at": file.uploaded_at
         })
-
-    ###################################################
 
     return {
 
@@ -251,14 +236,6 @@ def delete_file(path: str, name: str):
         name
     )
 
-    if deleted:
-
-        trash.add(
-            name,
-            "file",
-            f"{path}/{name}"
-        )
-
     return {
         "success": deleted
     }
@@ -286,14 +263,6 @@ def delete_directory(
         parent_directory,
         name
     )
-
-    if deleted:
-
-        trash.add(
-            name,
-            "directory",
-            f"{path}/{name}"
-        )
 
     return {
         "success": deleted
@@ -394,6 +363,8 @@ def update_file_tags(data: dict):
 
             file.set_tags(tags)
 
+            fs.save()
+
             return {
                 "success": True,
                 "message": "Tags updated successfully"
@@ -408,7 +379,7 @@ def update_file_tags(data: dict):
 #######################################################
 
 @router.post("/upload")
-async def upload_file(
+def upload_file(
     path: str,
     tags: str = "",
     uploaded_file: UploadFile = File(...)
@@ -422,20 +393,12 @@ async def upload_file(
             "error": "Directory not found"
         }
 
-    ###################################################
-    # STORAGE
-    ###################################################
-
     storage_path = "storage/uploads"
 
     os.makedirs(
         storage_path,
         exist_ok=True
     )
-
-    ###################################################
-    # SAVE FILE
-    ###################################################
 
     file_location = os.path.join(
         storage_path,
@@ -452,17 +415,9 @@ async def upload_file(
             buffer
         )
 
-    ###################################################
-    # FILE SIZE
-    ###################################################
-
     size = os.path.getsize(
         file_location
     )
-
-    ###################################################
-    # TAGS
-    ###################################################
 
     parsed_tags = []
 
@@ -477,10 +432,6 @@ async def upload_file(
             if tag.strip()
         ]
 
-    ###################################################
-    # CREATE LOGICAL FILE
-    ###################################################
-
     fs.create_file(
 
         directory,
@@ -491,62 +442,15 @@ async def upload_file(
 
         size=size,
 
-        tags=parsed_tags
+        tags=parsed_tags,
+        action="uploaded"
     )
 
-    ###################################################
 
     return {
         "message": "File uploaded successfully"
     }
-    #######################################################
-# STATS
-#######################################################
 
-@router.get("/stats")
-def get_stats():
-
-    total_files = 0
-
-    used_storage = 0
-
-    ###################################################
-    # RECURSIVE SCAN
-    ###################################################
-
-    def scan_directory(directory):
-
-        nonlocal total_files
-        nonlocal used_storage
-
-        #################################################
-
-        total_files += len(directory.files)
-
-        #################################################
-
-        for file in directory.files:
-
-            used_storage += file.size or 0
-
-        #################################################
-
-        for subdirectory in directory.subdirectories:
-
-            scan_directory(subdirectory)
-
-    ###################################################
-
-    scan_directory(fs.root)
-
-    ###################################################
-
-    return {
-
-        "total_files": total_files,
-
-        "used_storage": used_storage
-    }
 #######################################################
 # STATS
 #######################################################
@@ -560,50 +464,34 @@ def get_stats():
 
     total_size = 0
 
-    ###################################################
-
     def traverse(directory):
 
         nonlocal total_files
         nonlocal total_directories
         nonlocal total_size
 
-        ################################################
-
         total_directories += len(
             directory.subdirectories
         )
-
-        ################################################
 
         total_files += len(
             directory.files
         )
 
-        ################################################
-
         for file in directory.files:
 
-            total_size += file.size
-
-        ################################################
+            total_size += file.size or 0
 
         for subdirectory in directory.subdirectories:
 
             traverse(subdirectory)
 
-    ###################################################
-
     traverse(fs.root)
-
-    ###################################################
 
     size_gb = (
         total_size /
         (1024 * 1024 * 1024)
     )
-
-    ###################################################
 
     return {
 
@@ -644,23 +532,51 @@ def get_trash():
 
 @router.put("/trash/restore")
 def restore_from_trash(data: dict):
-
     name = data["name"]
-
+    
+    # Obtener el item de la papelera
     item = trash.restore(name)
-
-    if item:
-
-        return {
-            "success": True,
-            "message": f"Item '{name}' restored",
-            "item": item.to_dict()
-        }
-
+    
+    if not item:
+        return {"error": "Item not found in trash"}
+    
+    # Obtener el directorio padre desde original_path
+    original_path = item.original_path
+    if not original_path:
+        return {"error": "Original path not found"}
+    
+    # Extraer el directorio padre (quitar el nombre del archivo/carpeta)
+    path_parts = original_path.split('/')
+    parent_path = '/'.join(path_parts[:-1]) if len(path_parts) > 1 else "root"
+    
+    parent_directory = fs.get_directory_by_path(parent_path)
+    
+    # Si el directorio padre no existe, usar root
+    if not parent_directory:
+        parent_directory = fs.root
+    
+    # Recrear el archivo o carpeta
+    if item.item_type == "file":
+        # Verificar si el archivo ya existe
+        existing_file = next((f for f in parent_directory.files if f.name == item.name), None)
+        if not existing_file:
+            new_file = fs.create_file(parent_directory, item.name, tags=[])
+            # Si había tamaño guardado, asignarlo
+            if hasattr(item, 'size') and item.size:
+                new_file.size = item.size
+    else:
+        # Verificar si la carpeta ya existe
+        existing_dir = next((d for d in parent_directory.subdirectories if d.name == item.name), None)
+        if not existing_dir:
+            fs.create_directory(parent_directory, item.name)
+    
+    fs.save()
+    
     return {
-        "error": "Item not found in trash"
+        "success": True,
+        "message": f"Item '{name}' restored successfully",
+        "item": item.to_dict()
     }
-
 #######################################################
 
 @router.delete("/trash/permanent")
@@ -677,4 +593,41 @@ def delete_permanent(name: str):
 
     return {
         "error": "Item not found in trash"
+    }
+
+#######################################################
+# RECENT ITEMS
+#######################################################
+
+@router.get("/recent")
+def get_recent_items():
+
+    return fs.get_recent_items()
+
+#######################################################
+# RECENT FILES ONLY (para tarjeta recientes)
+#######################################################
+
+@router.get("/recent/files")
+def get_recent_files():
+
+    recent_files = fs.get_recent_files_only()
+
+    return {
+        "recent_files": recent_files,
+        "count": len(recent_files)
+    }
+
+#######################################################
+# TRASH DETAIL (para vista de papelera)
+#######################################################
+
+@router.get("/trash/detail")
+def get_trash_detail():
+
+    items = trash.get_all()
+
+    return {
+        "items": [item.to_dict() for item in items],
+        "count": len(items)
     }

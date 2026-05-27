@@ -64,3 +64,14 @@ class File:
 
             "uploaded_at": self.uploaded_at
         }
+    #############################################
+    @classmethod
+    def from_dict(cls, data):
+
+        return cls(
+            name=data["name"],
+            real_path=data.get("real_path", ""),
+            size=data.get("size", 0),
+            tags=data.get("tags", []),
+            uploaded_at=data.get("uploaded_at")
+        )

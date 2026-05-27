@@ -1,7 +1,8 @@
-#directorio general (root)
-
 from backend.models.directory import Directory
 from backend.models.file import File
+from backend.models.trash import TrashSystem
+from backend.storage.storage_manager import StorageManager
+from datetime import datetime  # ← ESTO FALTABA
 
 
 class FileSystem:
@@ -9,6 +10,17 @@ class FileSystem:
     def __init__(self):
 
         self.root = Directory("root")
+
+        # PILA (LIFO) para recientes - los últimos en llegar son los primeros en mostrar
+        self.recent_stack = []
+
+        # límite visual
+        self.max_recent = 10
+        
+        self.trash = TrashSystem()
+
+        # Intentar cargar datos guardados
+        self.load()
 
     ####################################################
 
@@ -23,9 +35,9 @@ class FileSystem:
             parent_directory
         )
 
-        parent_directory.subdirectories.append(
-            new_directory
-        )
+        parent_directory.subdirectories.append(new_directory)
+        self.add_recent(directory_name, "directory_created")
+        self.save()
 
         return new_directory
 
@@ -37,7 +49,7 @@ class FileSystem:
         file_name,
         real_path="",
         size=0,
-        tags=None
+        tags=None, action="file_created"
     ):
 
         new_file = File(
@@ -48,8 +60,10 @@ class FileSystem:
         )
 
         directory.files.append(new_file)
-
+        self.add_recent(file_name, action)
+        self.save()
         return new_file
+    
     ####################################################
 
     def find_directory(
@@ -62,12 +76,7 @@ class FileSystem:
             return current_directory
 
         for subdirectory in current_directory.subdirectories:
-
-            result = self.find_directory(
-                subdirectory,
-                directory_name
-            )
-
+            result = self.find_directory(subdirectory, directory_name)
             if result:
                 return result
 
@@ -75,10 +84,10 @@ class FileSystem:
 
     ####################################################
 
-    def get_directory_by_path(
-        self,
-        path
-    ):
+    def get_directory_by_path(self, path):
+
+        if not path or path == "root":
+            return self.root
 
         parts = path.strip("/").split("/")
 
@@ -88,20 +97,13 @@ class FileSystem:
         current = self.root
 
         for part in parts[1:]:
-
             found = None
-
             for subdirectory in current.subdirectories:
-
                 if subdirectory.name == part:
-
                     found = subdirectory
-
                     break
-
             if not found:
                 return None
-
             current = found
 
         return current
@@ -115,17 +117,11 @@ class FileSystem:
     ):
 
         for file in current_directory.files:
-
             if file.name == file_name:
                 return file
 
         for subdirectory in current_directory.subdirectories:
-
-            result = self.find_file_by_name(
-                subdirectory,
-                file_name
-            )
-
+            result = self.find_file_by_name(subdirectory, file_name)
             if result:
                 return result
 
@@ -142,93 +138,137 @@ class FileSystem:
         results = []
 
         for file in current_directory.files:
-
             if tag in file.tags:
                 results.append(file)
 
         for subdirectory in current_directory.subdirectories:
-
-            results.extend(
-                self.search_by_tag(
-                    subdirectory,
-                    tag
-                )
-            )
+            results.extend(self.search_by_tag(subdirectory, tag))
 
         return results
 
     ####################################################
 
-    def delete_file(
-        self,
-        directory,
-        file_name
-    ):
-
+    def delete_file(self, directory, file_name):
         for file in directory.files:
-
             if file.name == file_name:
-
-                directory.files.remove(file)
-
-                return True
-
-        return False
-
-    ####################################################
-
-    def delete_directory(
-        self,
-        parent_directory,
-        directory_name
-    ):
-
-        for directory in parent_directory.subdirectories:
-
-            if directory.name == directory_name:
-
-                parent_directory.subdirectories.remove(
-                    directory
+                self.trash.add(
+                    file.name, 
+                    "file", 
+                    f"{directory.path}/{file_name}",
+                    file.size  # ← Pasar tamaño
                 )
-
+                directory.files.remove(file)
+                self.add_recent(file_name, "deleted")
+                self.save()
                 return True
-
         return False
 
     ####################################################
 
-    def rename_directory(
-        self,
-        parent_directory,
-        old_name,
-        new_name
-    ):
+    def delete_directory(self, parent_directory, directory_name):
+        for directory in parent_directory.subdirectories:
+            if directory.name == directory_name:
+                existing = any(item.name == directory_name for item in self.trash.items)
+                if not existing:
+                    self.trash.add(directory.name, "directory", f"{parent_directory.path}/{directory_name}")
+                parent_directory.subdirectories.remove(directory)
+                self.add_recent(directory_name, "deleted")
+                self.save()
+                return True
+        return False
+
+    ####################################################
+
+    def rename_directory(self, parent_directory, old_name, new_name):
 
         for directory in parent_directory.subdirectories:
-
             if directory.name == old_name:
-
                 directory.name = new_name
-
+                self.add_recent(new_name, "renamed")
+                self.save()
                 return True
-
         return False
 
     ####################################################
 
-    def rename_file(
-        self,
-        directory,
-        old_name,
-        new_name
-    ):
+    def rename_file(self, directory, old_name, new_name):
 
         for file in directory.files:
-
             if file.name == old_name:
-
                 file.name = new_name
-
+                self.add_recent(new_name, "renamed")
+                self.save()
                 return True
-
         return False
+    
+    ####################################################
+
+    def add_recent(self, item_name, action):
+        """PILA (LIFO) - los más recientes se agregan al final"""
+        recent_item = {
+            "name": item_name,
+            "action": action,
+            "timestamp": datetime.now().isoformat()
+        }
+
+        self.recent_stack.append(recent_item)
+
+        # Si excede el límite, eliminar el más ANTIGUO (FIFO para mantener solo los últimos N)
+        if len(self.recent_stack) > self.max_recent:
+            self.recent_stack.pop(0)
+
+    ####################################################
+
+    def get_recent_items(self):
+        """Retorna los items en orden inverso (más reciente primero)"""
+        return list(reversed(self.recent_stack))
+    
+    ####################################################
+    
+    def get_recent_files_only(self):
+        """Filtra solo acciones relacionadas con archivos (para la tarjeta Recientes)"""
+        file_actions = ["file_created", "uploaded", "renamed"]
+        recent_files = [
+            item for item in self.recent_stack 
+            if item["action"] in file_actions
+        ]
+        return list(reversed(recent_files[:5]))
+    
+    ####################################################
+    
+    def get_trash_items(self):
+        return self.trash.to_dict()
+    
+    ####################################################
+
+    def save(self):
+        data = {
+            "root": self.root.to_dict(),
+            "recent": self.recent_stack,
+            "trash": self.trash.to_dict()
+        }
+        StorageManager.save(data)
+    
+    ####################################################
+
+    def load(self):
+        data = StorageManager.load()
+        if data:
+            try:
+                # Reconstruir root desde dict
+                self.root = Directory.from_dict(data["root"])
+                self.recent_stack = data.get("recent", [])
+                # Reconstruir trash
+                for item_data in data.get("trash", []):
+                    self.trash.add(
+                        item_data["name"],
+                        item_data["item_type"],
+                        item_data["original_path"]
+                    )
+                    for item in self.trash.items:
+                        if item.name == item_data["name"]:
+                            item.deleted_at = item_data["deleted_at"]
+                            break
+                print("Sistema cargado correctamente")
+            except Exception as e:
+                print(f"Error al cargar datos: {e}")

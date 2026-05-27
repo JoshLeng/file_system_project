@@ -390,7 +390,28 @@
     </div>
 
     <script src="main.js"></script>
-
+    <!-- TRASH MODAL -->
+    <div class="modal" id="trash-modal">
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h2><i class="fa-regular fa-trash-can"></i> Papelera</h2>
+                <button class="modal-close-btn" id="close-trash-modal">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="trash-items-list">
+                    <div class="loading">Cargando...</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" id="empty-trash-btn">
+                    <i class="fa-regular fa-trash-can"></i> Vaciar papelera
+                </button>
+                <button class="btn-save" id="close-trash-btn">Cerrar</button>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

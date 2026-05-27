@@ -943,3 +943,73 @@ tr{
 
     background: #4f46e5;
 }
+/* TRASH MODAL */
+.modal-lg {
+    max-width: 800px;
+    width: 90%;
+}
+
+.trash-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #374151;
+    background: #111827;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.trash-item-info {
+    flex: 1;
+}
+
+.trash-item-name {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.trash-item-path {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 4px;
+}
+
+.trash-item-date {
+    font-size: 12px;
+    color: #60a5fa;
+    margin-top: 4px;
+}
+
+.trash-item-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.restore-btn {
+    background: #22c55e;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.permanent-delete-btn {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: #94a3b8;
+}
+
+.empty-trash-btn {
+    background: #ef4444 !important;
+}

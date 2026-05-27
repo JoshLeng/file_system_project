@@ -55,8 +55,31 @@ class Directory:
                 subdirectory.to_dict()
                 for subdirectory in self.subdirectories
             ],
-            "files": [
-                file.name
+            "files_data": [
+                file.to_dict()
                 for file in self.files
             ]
         }
+    ############################
+    @classmethod
+    def from_dict(cls, data, parent=None):
+
+        directory = cls(
+            name=data["name"],
+            parent=parent,
+            created_at=data.get("created_at")
+        )
+
+        from backend.models.file import File
+
+        directory.files = [
+            File.from_dict(file_data)
+            for file_data in data.get("files_data", [])
+        ]
+
+        directory.subdirectories = [
+            cls.from_dict(sub, directory)
+            for sub in data.get("subdirectories", [])
+        ]
+
+        return directory
