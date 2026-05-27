@@ -17,7 +17,8 @@ let currentView = "dashboard";
 let currentEditingFile = null;
 let currentEditingTags = [];
 let originalTableHeaders = null;
-let pendingLoad = null;
+let pendingLoadController = null;
+let lastLoadRequestId = 0;
 
 ////////////////////////////////////////////////////////////
 // LOAD TREE
@@ -70,7 +71,6 @@ function renderSidebar(directory, container = null) {
         const tableBody = document.getElementById("table-body");
         if (tableBody) tableBody.innerHTML = "";
         await loadDirectoryContent(currentDirectory);
-        renderBreadcrumbs(currentDirectory);
         
         document.getElementById("dashboard-view-btn").classList.add("active");
         document.getElementById("directories-view-btn").classList.remove("active");
@@ -94,35 +94,51 @@ function renderSidebar(directory, container = null) {
 ////////////////////////////////////////////////////////////
 
 async function loadDirectoryContent(path) {
-    if (pendingLoad) {
-        console.log("Cancelando carga anterior");
-        return;
-    }
-
     if (path && path !== currentDirectory) {
         currentDirectory = path;
         lastDirectory = path;
     }
 
+    const targetDirectory = currentDirectory;
+    const requestId = ++lastLoadRequestId;
+
+    if (pendingLoadController) {
+        pendingLoadController.abort();
+    }
+
+    pendingLoadController = new AbortController();
+
     const tableBody = document.getElementById("table-body");
     if (tableBody) tableBody.innerHTML = "";
 
-    pendingLoad = true;
-
     try {
-        const response = await fetch(`${API_URL}/directory/content?path=${currentDirectory}`);
+        const response = await fetch(
+            `${API_URL}/directory/content?path=${encodeURIComponent(targetDirectory)}`,
+            { signal: pendingLoadController.signal }
+        );
         const data = await response.json();
+
+        if (requestId !== lastLoadRequestId) {
+            return;
+        }
 
         if (data.error) {
             console.error("Error del servidor:", data.error);
             return;
         }
 
+        currentDirectory = targetDirectory;
+        lastDirectory = targetDirectory;
         renderDirectoryContent(data);
+        renderBreadcrumbs(currentDirectory);
     } catch (error) {
-        console.error("Error loading content:", error);
+        if (error.name !== "AbortError") {
+            console.error("Error loading content:", error);
+        }
     } finally {
-        pendingLoad = false;
+        if (requestId === lastLoadRequestId) {
+            pendingLoadController = null;
+        }
     }
 }
 
@@ -454,7 +470,6 @@ function renderOnlyDirectories(directories) {
             lastDirectory = currentDirectory;
             currentView = "dashboard";
             await loadDirectoryContent(currentDirectory);
-            renderBreadcrumbs(currentDirectory);
         };
 
         tableBody.appendChild(row);
@@ -486,7 +501,6 @@ function renderBreadcrumbs(path) {
             lastDirectory = currentDirectory;
             currentView = "dashboard";
             await loadDirectoryContent(currentDirectory);
-            renderBreadcrumbs(currentDirectory);
         };
 
         container.appendChild(crumb);
@@ -790,7 +804,6 @@ async function navigateToRecentFile(fileName) {
             currentView = "dashboard";
             setTableHeaders("dashboard");
             await loadDirectoryContent(currentDirectory);
-            renderBreadcrumbs(currentDirectory);
 
             setTimeout(() => highlightFileInTable(fileName), 500);
             alert(`✅ Archivo encontrado en: ${location}`);
@@ -798,7 +811,6 @@ async function navigateToRecentFile(fileName) {
             currentDirectory = "root";
             lastDirectory = "root";
             await loadDirectoryContent("root");
-            renderBreadcrumbs("root");
             alert(`⚠️ Archivo encontrado en la raíz`);
         }
 
@@ -966,7 +978,6 @@ document.addEventListener("DOMContentLoaded", () => {
         
         setTableHeaders("dashboard");
         await loadDirectoryContent(currentDirectory);
-        renderBreadcrumbs(currentDirectory);
     });
 
     document.getElementById("directories-view-btn").addEventListener("click", async () => {
