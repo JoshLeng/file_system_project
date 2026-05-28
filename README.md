@@ -27,8 +27,7 @@ Un gestor de archivos local basado en **FastAPI** que permite crear, organizar y
 - ✅ **Interfaz Web (Frontend integrado)** - HTML, CSS, JavaScript
 - ✅ **Búsqueda Avanzada** - Filtros por nombre y etiquetas
 - ✅ **Soporte Multi-Lenguaje** - Integración con C++ y Papyrus
-- 🔜 Compartir archivos con links
-- 🔜 Persistencia en base de datos
+
 
 ---
 
@@ -55,8 +54,6 @@ Un gestor de archivos local basado en **FastAPI** que permite crear, organizar y
 -  JavaScript: 29.5%
 -  Python: 27.6%
 -  HTML: 13.8%
--  Papyrus: 11%
--  C++: 9.4%
 -  CSS: 8.7%
 
 ---
@@ -80,8 +77,8 @@ El proyecto sigue un patrón de **arquitectura en capas con soporte multi-lengua
 ┌────────────────▼──────────────────────┐
 │   FileSystem Service (Lógica)         │
 │   backend/services/file_system.py     │
-│   + Módulos optimizados (C++ - 9.4%)  │
-│   + Scripts Papyrus (11%)             │
+│                                       │
+│                                       │
 └────────────────┬──────────────────────┘
                  │
 ┌────────────────▼──────────────────────┐
@@ -98,7 +95,6 @@ El proyecto sigue un patrón de **arquitectura en capas con soporte multi-lengua
 - Python 3.8+
 - pip
 - Node.js (opcional, para desarrollo del frontend)
-- Compilador C++ (para módulos nativos)
 
 ### Pasos de Instalación
 
@@ -483,9 +479,9 @@ Este proyecto está bajo licencia de **FLIE DRIVE™**
 
 ## 👥 Autores
 
-- **Kevin Xulú** - Desarrollo Backend
-- **Josué Godínez** - Desarrollo Backend
-- **JoshLeng** ([@JoshLeng](https://github.com/JoshLeng)) - Coordinación, Frontend e Integración
+- **Kevin Xulú** 
+- **Josué Godínez** 
+- Coordinación, Frontend e Integración
 
 ---
 
