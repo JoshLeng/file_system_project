@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Drive - Admin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        body {
+            background: #0f172a;
+            color: white;
+            padding: 30px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #94a3b8;
+            margin-bottom: 30px;
+        }
+        .nav-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .nav-btn {
+            padding: 10px 20px;
+            background: #1e293b;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .nav-btn:hover {
+            background: #3b82f6;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #111827;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #1e293b;
+        }
+        th {
+            background: #1e293b;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+        .badge-admin {
+            background: #7c3aed;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        .badge-user {
+            background: #334155;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #94a3b8;
+        }
+        .back-btn {
+            background: #3b82f6;
+            margin-left: auto;
+        }
+        .btn-clear {
+            background: #7f1d1d;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-bar">
+            <a href="/frontend/index.html" class="nav-btn">📁 Gestor de archivos</a>
+            <a href="/frontend/login.html" class="nav-btn">🚪 Cerrar sesión</a>
+            <button id="clear-logs-btn" class="nav-btn btn-clear">🗑️ Limpiar logs</button>
+        </div>
+        <h1>Panel de Administración</h1>
+        <p class="subtitle">Registro de actividades de usuarios</p>
+        
+        <div id="logs-container">
+            <div class="loading">Cargando logs...</div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = window.location.origin;
+        
+        // Verificar que el usuario es admin
+        const isAdmin = sessionStorage.getItem("isAdmin") === "true";
+        const user = sessionStorage.getItem("user");
+        
+        if (!user) {
+            window.location.href = "/frontend/login.html";
+        }
+        
+        if (!isAdmin) {
+            document.body.innerHTML = "<div style='text-align:center;padding:50px'><h1>⛔ Acceso denegado</h1><p>Solo administradores pueden ver esta página.</p><a href='/frontend/index.html'>Volver al gestor</a></div>";
+        }
+        
+        async function loadLogs() {
+            try {
+                const response = await fetch(`${API_URL}/admin/logs`);
+                const logs = await response.json();
+                
+                const container = document.getElementById("logs-container");
+                
+                if (logs.length === 0) {
+                    container.innerHTML = '<div class="loading">📭 No hay actividades registradas</div>';
+                    return;
+                }
+                
+                const table = document.createElement("table");
+                table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Acción</th>
+                            <th>Archivo/Carpeta</th>
+                            <th>Fecha y hora</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logs-body"></tbody>
+                `;
+                
+                const tbody = table.querySelector("#logs-body");
+                
+                logs.reverse().forEach(log => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td>${log.user || "desconocido"}</td>
+                        <td>${log.action}</td>
+                        <td>${log.item || "-"}</td>
+                        <td>${new Date(log.timestamp).toLocaleString("es-ES")}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                
+                container.innerHTML = "";
+                container.appendChild(table);
+                
+            } catch (error) {
+                console.error("Error loading logs:", error);
+                document.getElementById("logs-container").innerHTML = '<div class="loading">❌ Error al cargar logs</div>';
+            }
+        }
+        
+        document.getElementById("clear-logs-btn")?.addEventListener("click", async () => {
+            if (confirm("¿Eliminar todos los logs de actividad? Esta acción no se puede deshacer.")) {
+                const response = await fetch(`${API_URL}/admin/clear-logs`, { method: "DELETE" });
+                const result = await response.json();
+                if (result.success) {
+                    await loadLogs();
+                } else {
+                    alert("Error al limpiar logs");
+                }
+            }
+        });
+        
+        loadLogs();
+    </script>
+</body>
+</html>

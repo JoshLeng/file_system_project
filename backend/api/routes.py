@@ -633,7 +633,86 @@ def get_trash_detail():
         "items": [item.to_dict() for item in items],
         "count": len(items)
     }
+#######################################################
+# LOGIN
+#######################################################
 
+import json
+from datetime import datetime
+
+# Cargar usuarios desde archivo JSON
+def load_users():
+    try:
+        with open("storage/users.json", "r", encoding="utf-8") as f:
+            return json.load(f)
+    except:
+        return {"admin": "admin123"}
+
+@router.post("/login")
+def login(data: dict):
+    username = data.get("username")
+    password = data.get("password")
+    
+    users = load_users()
+    
+    if username in users and users[username] == password:
+        return {
+            "success": True,
+            "user": username,
+            "isAdmin": username == "admin"
+        }
+    
+    return {"success": False, "error": "Credenciales inválidas"}
+
+#######################################################
+# ACTIVITY LOG
+#######################################################
+
+LOG_FILE = "storage/activity_log.json"
+
+def save_log(log_entry):
+    try:
+        with open(LOG_FILE, "r", encoding="utf-8") as f:
+            logs = json.load(f)
+    except:
+        logs = []
+    
+    logs.append(log_entry)
+    
+    with open(LOG_FILE, "w", encoding="utf-8") as f:
+        json.dump(logs, f, indent=4, ensure_ascii=False)
+
+@router.post("/log-activity")
+def log_activity(data: dict):
+    """Registrar una actividad de usuario"""
+    log_entry = {
+        "user": data.get("user", "desconocido"),
+        "action": data.get("action"),
+        "item": data.get("item"),
+        "timestamp": datetime.now().isoformat()
+    }
+    save_log(log_entry)
+    return {"success": True}
+
+@router.get("/admin/logs")
+def get_logs():
+    """Obtener todos los logs (solo admin debería acceder)"""
+    try:
+        with open(LOG_FILE, "r", encoding="utf-8") as f:
+            logs = json.load(f)
+        return logs
+    except:
+        return []
+
+@router.delete("/admin/clear-logs")
+def clear_logs():
+    """Limpiar todos los logs"""
+    try:
+        with open(LOG_FILE, "w", encoding="utf-8") as f:
+            json.dump([], f)
+        return {"success": True}
+    except:
+        return {"success": False, "error": "Error al limpiar logs"}
 #######################################################
 # DOWNLOAD FILE
 #######################################################
@@ -651,3 +730,85 @@ def download_file(filename: str):
         filename=filename,
         media_type="application/octet-stream"
     )
+    
+#######################################################
+# SHARE FILE (HASH)
+#######################################################
+
+@router.post("/create-share-link")
+def create_share_link(data: dict):
+    file_name = data.get("file_name")
+    user = data.get("user", "desconocido")
+    
+    # Buscar el archivo y su ruta de directorio
+    file_found = None
+    file_path = None
+    directory_path = None
+    
+    def search_file(directory, current_path="root"):
+        nonlocal file_found, file_path, directory_path
+        for file in directory.files:
+            if file.name == file_name:
+                file_found = file
+                file_path = file.real_path
+                directory_path = current_path
+                return True
+        for subdir in directory.subdirectories:
+            new_path = f"{current_path}/{subdir.name}"
+            if search_file(subdir, new_path):
+                return True
+        return False
+    
+    search_file(fs.root)
+    
+    if not file_found:
+        return {"error": "Archivo no encontrado"}
+    
+    hash_id = fs.create_share_link(file_name, file_path, directory_path, user)
+    
+    return {
+        "success": True,
+        "hash": hash_id,
+        "link": f"/share/{hash_id}",
+        "file_name": file_name
+    }
+@router.get("/share/{hash_id}")
+def get_shared_file(hash_id: str):
+    """Redirige al directorio donde está el archivo compartido"""
+    from fastapi.responses import RedirectResponse
+    
+    file_info = fs.get_shared_file(hash_id)
+    
+    if not file_info:
+        return {"error": "Enlace inválido o archivo no encontrado"}
+    
+    file_name = file_info.get("file_name")
+    
+    # Buscar la ruta del directorio donde está el archivo
+    directory_path = None
+    
+    def search_directory(directory, current_path="root"):
+        nonlocal directory_path
+        for file in directory.files:
+            if file.name == file_name:
+                directory_path = current_path
+                return True
+        for subdir in directory.subdirectories:
+            new_path = f"{current_path}/{subdir.name}"
+            if search_directory(subdir, new_path):
+                return True
+        return False
+    
+    search_directory(fs.root)
+    
+    if not directory_path:
+        return {"error": "No se encontró la ubicación del archivo"}
+    
+    # Redirigir al frontend con la ruta y el nombre del archivo
+    redirect_url = f"/frontend/index.html?path={directory_path}&highlight={file_name}"
+    
+    return RedirectResponse(url=redirect_url)
+@router.get("/share-links")
+def get_all_share_links():
+    """Obtener todos los enlaces compartidos (solo admin)"""
+    return {"links": fs.share_links}

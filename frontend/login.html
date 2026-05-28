@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Drive - Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #0f172a, #1e1b4b);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .login-container {
+            background: #111827;
+            padding: 40px;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            width: 100%;
+            max-width: 400px;
+        }
+        .brand {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .brand-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #3b82f6, #9333ea);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-size: 28px;
+            color: white;
+        }
+        h2 {
+            color: white;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        input {
+            width: 100%;
+            padding: 14px 16px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            color: white;
+            font-size: 15px;
+            margin-bottom: 15px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            border-color: #3b82f6;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #3b82f6, #9333ea);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        .error {
+            background: #7f1d1d;
+            color: #fca5a5;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 15px;
+            text-align: center;
+            font-size: 14px;
+            display: none;
+        }
+        .info {
+            text-align: center;
+            margin-top: 20px;
+            color: #94a3b8;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="brand">
+            <div class="brand-icon">
+                <i class="fa-solid fa-layer-group"></i>
+            </div>
+        </div>
+        <h2>FILE DRIVE</h2>
+        <input type="text" id="username" placeholder="Usuario" autocomplete="off">
+        <input type="password" id="password" placeholder="Contraseña">
+        <button id="login-btn">Ingresar</button>
+        <div class="error" id="error-msg"></div>
+        <div class="info">
+            Usuarios: admin / ana / juan / maria<br>
+            Contraseña: el mismo nombre + "123"<br>
+            (admin123, ana123, juan123, maria123)
+        </div>
+    </div>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <script>
+        const API_URL = window.location.origin;
+        
+        document.getElementById("login-btn").addEventListener("click", async () => {
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value;
+            const errorDiv = document.getElementById("error-msg");
+            
+            if (!username || !password) {
+                errorDiv.textContent = "Complete ambos campos";
+                errorDiv.style.display = "block";
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}/login`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    sessionStorage.setItem("user", username);
+                    sessionStorage.setItem("isAdmin", data.isAdmin ? "true" : "false");
+                    window.location.href = "/frontend/index.html";
+                } else {
+                    errorDiv.textContent = data.error || "Usuario o contraseña incorrectos";
+                    errorDiv.style.display = "block";
+                }
+            } catch (error) {
+                errorDiv.textContent = "Error de conexión con el servidor";
+                errorDiv.style.display = "block";
+            }
+        });
+        
+        document.getElementById("username").addEventListener("keypress", (e) => {
+            if (e.key === "Enter") document.getElementById("login-btn").click();
+        });
+        document.getElementById("password").addEventListener("keypress", (e) => {
+            if (e.key === "Enter") document.getElementById("login-btn").click();
+        });
+    </script>
+</body>
+</html>

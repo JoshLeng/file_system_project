@@ -6,6 +6,31 @@ console.log("MAIN JS CARGADO");
 
 const API_URL = window.location.origin;
 
+
+
+// LOG DE ACTIVIDADES
+let currentUser = null;
+
+async function logActivity(action, item = "") {
+    if (!currentUser) {
+        currentUser = sessionStorage.getItem("user");
+    }
+    if (!currentUser) return;
+    
+    try {
+        await fetch(`${API_URL}/log-activity`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                user: currentUser,
+                action: action,
+                item: item
+            })
+        });
+    } catch (error) {
+        console.error("Error logging activity:", error);
+    }
+}
 ////////////////////////////////////////////////////////////
 // GLOBAL STATE
 ////////////////////////////////////////////////////////////
@@ -19,7 +44,42 @@ let currentEditingTags = [];
 let originalTableHeaders = null;
 let pendingLoadController = null;
 let lastLoadRequestId = 0;
-
+//////////////////////////
+// COMPARTIR ARCHIVO (HASH)
+async function shareFile(fileName) {
+    try {
+        const response = await fetch(`${API_URL}/create-share-link`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                file_name: fileName,
+                user: sessionStorage.getItem("user") || "desconocido"
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            alert("Error: " + data.error);
+            return;
+        }
+        
+        const fullLink = `${window.location.origin}${data.link}`;
+        
+        // Mostrar el link para copiar
+        const copyResult = prompt("📎 Enlace compartible (copia y envía):", fullLink);
+        if (copyResult !== null) {
+            // Usuario ya copió manualmente
+            alert("✅ Enlace copiado. Cualquier persona con este link puede acceder al archivo.");
+        }
+        
+        await logActivity("compartió archivo", fileName);
+        
+    } catch (error) {
+        console.error("Error sharing file:", error);
+        alert("Error al generar enlace compartible");
+    }
+}
 ////////////////////////////////////////////////////////////
 // LOAD TREE
 ////////////////////////////////////////////////////////////
@@ -428,6 +488,7 @@ function renderDirectoryContent(data) {
                 ${file.name.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i) ? 
                     `<button class="preview-file-btn" data-file-name="${file.name}">👁️ Vista previa</button>` : 
                     ''}
+                    <button class="share-file-btn" data-file-name="${file.name}">🔗 Compartir</button
              </td>
         `;
 
@@ -592,7 +653,7 @@ async function uploadFile(file) {
     try {
         const formData = new FormData();
         formData.append("uploaded_file", file);
-
+        await logActivity("subió archivo", file.name);
         const uploadResponse = await fetch(`${API_URL}/upload?path=${encodeURIComponent(savedDirectory)}&tags=${encodeURIComponent(tagsInput || "")}`, {
             method: "POST",
             body: formData
@@ -642,6 +703,7 @@ async function createDirectory(name) {
         if (result.message) {
             currentDirectory = savedDirectory;
             lastDirectory = savedDirectory;
+            await logActivity("creó carpeta", name);
             await loadDirectoryContent(currentDirectory);
             await refreshSidebar();
             await loadStats();
@@ -765,6 +827,7 @@ async function deleteFile(name) {
         if (result.success) {
             currentDirectory = savedDirectory;
             lastDirectory = savedDirectory;
+            await logActivity("eliminó archivo", name);
             await loadDirectoryContent(currentDirectory);
             await loadStats();
             await loadTrashCount();
@@ -926,12 +989,49 @@ async function saveFileTags() {
 ////////////////////////////////////////////////////////////
 
 document.addEventListener("DOMContentLoaded", () => {
+    // Leer parámetros de la URL (para redirección desde link compartido)
+    const urlParams = new URLSearchParams(window.location.search);
+    const highlightPath = urlParams.get("path");
+    const highlightFile = urlParams.get("highlight");
+
+    if (highlightPath && highlightFile) {
+        currentDirectory = highlightPath;
+        lastDirectory = highlightPath;
+        
+        // Cargar el directorio y resaltar el archivo
+        setTimeout(async () => {
+            await loadDirectoryContent(currentDirectory);
+            renderBreadcrumbs(currentDirectory);
+            
+            // Resaltar el archivo
+            setTimeout(() => {
+                highlightFileInTable(highlightFile);
+            }, 500);
+        }, 100);
+    }
     loadTree();
     loadDirectoryContent(currentDirectory);
     loadStats();
     loadTrashCount();
     loadRecentCount();
     renderBreadcrumbs(currentDirectory);
+
+    // Verificar login
+    currentUser = sessionStorage.getItem("user");
+    if (!currentUser) {
+        window.location.href = "/frontend/login.html";
+        return;
+    }
+    console.log("Usuario logueado:", currentUser);
+
+    // Agregar botón de admin si es admin
+    if (sessionStorage.getItem("isAdmin") === "true") {
+        const adminBtn = document.createElement("button");
+        adminBtn.textContent = "👑 Admin";
+        adminBtn.style.cssText = "position:fixed; bottom:20px; right:20px; background:#7c3aed; color:white; border:none; padding:10px 15px; border-radius:20px; cursor:pointer; z-index:1000;";
+        adminBtn.onclick = () => window.location.href = "/frontend/admin.html";
+        document.body.appendChild(adminBtn);
+    }
 
     document.getElementById("new-folder-btn").addEventListener("click", async () => {
         const name = prompt("Nombre de la carpeta");
@@ -1055,6 +1155,13 @@ document.addEventListener("DOMContentLoaded", () => {
             const fileName = previewBtn.dataset.fileName;
             window.open(`${API_URL}/storage/uploads/${encodeURIComponent(fileName)}`, "_blank");
         }
+        // Botón compartir (hash)
+const shareBtn = event.target.closest(".share-file-btn");
+if (shareBtn) {
+    event.stopPropagation();
+    const fileName = shareBtn.dataset.fileName;
+    await shareFile(fileName);
+}
 
         const editTagsBtn = event.target.closest(".edit-tags-btn");
         if (editTagsBtn) {

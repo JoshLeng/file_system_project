@@ -2,7 +2,9 @@ from backend.models.directory import Directory
 from backend.models.file import File
 from backend.models.trash import TrashSystem
 from backend.storage.storage_manager import StorageManager
-from datetime import datetime  # ← ESTO FALTABA
+from datetime import datetime
+import hashlib
+import base64
 
 
 class FileSystem:
@@ -18,6 +20,8 @@ class FileSystem:
         self.max_recent = 10
         
         self.trash = TrashSystem()
+        self.share_links = {}  # Diccionario (tabla hash): hash -> info del archivo
+        self.load_share_links()  # Cargar links guardados
 
         # Intentar cargar datos guardados
         self.load()
@@ -240,7 +244,59 @@ class FileSystem:
         return self.trash.to_dict()
     
     ####################################################
+    def generate_short_hash(self, filename):
+        """Genera un hash corto único de 6 caracteres"""
+        import time
+        unique_string = f"{filename}{time.time()}{id(self)}"
+        hash_bytes = hashlib.sha256(unique_string.encode()).digest()
+        short_hash = base64.b64encode(hash_bytes).decode()[:6]
+        # Reemplazar caracteres que puedan causar problemas en URL
+        short_hash = short_hash.replace('/', '_').replace('+', '-')
+        return short_hash
 
+    def create_share_link(self, file_name, file_path, directory_path, created_by=""):
+        """Crea un enlace compartible para un archivo"""
+        # Verificar si ya existe un link para este archivo
+        for existing_hash, info in self.share_links.items():
+            if info.get("file_path") == file_path:
+                return existing_hash
+        
+        # Generar nuevo hash único
+        hash_id = self.generate_short_hash(file_name)
+        while hash_id in self.share_links:
+            hash_id = self.generate_short_hash(file_name + str(len(self.share_links)))
+        
+        self.share_links[hash_id] = {
+            "file_name": file_name,
+            "file_path": file_path,
+            "directory_path": directory_path,
+            "created_by": created_by,
+            "created_at": datetime.now().isoformat()
+        }
+        
+        self.save_share_links()
+        return hash_id
+
+    def get_shared_file(self, hash_id):
+        """Obtiene la información de un archivo compartido por hash"""
+        return self.share_links.get(hash_id)
+
+    def save_share_links(self):
+        """Guardar los enlaces compartidos en archivo JSON"""
+        try:
+            with open("storage/share_links.json", "w", encoding="utf-8") as f:
+                json.dump(self.share_links, f, indent=4, ensure_ascii=False)
+        except Exception as e:
+            print(f"Error guardando share_links: {e}")
+
+    def load_share_links(self):
+        """Cargar los enlaces compartidos desde archivo JSON"""
+        try:
+            with open("storage/share_links.json", "r", encoding="utf-8") as f:
+                self.share_links = json.load(f)
+        except:
+            self.share_links = {}
+    ##############################################
     def save(self):
         data = {
             "root": self.root.to_dict(),

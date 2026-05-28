@@ -1,18 +1,18 @@
 {
     "root": {
-        "id": "46a4b8fa-7c9c-43b6-9048-dbbd93f06ff1",
+        "id": "359d0343-b473-4e3b-8f23-34a99d0d2782",
         "name": "root",
         "path": "root",
         "created_at": "2026-05-25T19:36:33.714774",
-        "updated_at": "2026-05-26T21:05:16.220763",
+        "updated_at": "2026-05-27T18:09:39.364464",
         "size": 4782360,
         "subdirectories": [
             {
-                "id": "27e152ed-4aec-4eaf-b4a3-489d3b642fb7",
+                "id": "ad24c319-5af4-4ded-a44d-7bcf976a243b",
                 "name": "docu",
                 "path": "root/docu",
                 "created_at": "2026-05-26T08:27:52.734468",
-                "updated_at": "2026-05-26T21:05:16.220775",
+                "updated_at": "2026-05-27T18:09:39.364490",
                 "size": 4738900,
                 "subdirectories": [],
                 "files_data": [
@@ -55,11 +55,11 @@
                 ]
             },
             {
-                "id": "3943443e-a21b-4e79-bccf-0f65adfc1587",
+                "id": "bc8000ca-f978-4d65-914f-5cf8a4e52a7b",
                 "name": "videos",
                 "path": "root/videos",
                 "created_at": "2026-05-26T19:00:50.213679",
-                "updated_at": "2026-05-26T21:05:16.220789",
+                "updated_at": "2026-05-27T18:09:39.364508",
                 "size": 0,
                 "subdirectories": [],
                 "files_data": []
@@ -78,21 +78,6 @@
         ]
     },
     "recent": [
-        {
-            "name": "videos",
-            "action": "directory_created",
-            "timestamp": "2026-05-26T19:00:50.213714"
-        },
-        {
-            "name": "comparaci\u00f3n 3 num.cpp",
-            "action": "uploaded",
-            "timestamp": "2026-05-26T19:01:02.581606"
-        },
-        {
-            "name": "comparaci\u00f3n 3 num.cpp",
-            "action": "deleted",
-            "timestamp": "2026-05-26T19:01:19.280721"
-        },
         {
             "name": "prueba 2.psc",
             "action": "deleted",
@@ -127,6 +112,21 @@
             "name": "images (1).jpeg",
             "action": "uploaded",
             "timestamp": "2026-05-26T21:10:39.053087"
+        },
+        {
+            "name": "qu\u00e9 es emprendimiento.png",
+            "action": "uploaded",
+            "timestamp": "2026-05-27T18:11:27.716139"
+        },
+        {
+            "name": "emprendimiento",
+            "action": "renamed",
+            "timestamp": "2026-05-27T18:15:27.468986"
+        },
+        {
+            "name": "emprendimiento",
+            "action": "deleted",
+            "timestamp": "2026-05-27T18:15:50.154161"
         }
     ],
     "trash": [
@@ -160,6 +160,14 @@
             "original_path": "root/docu/repaso",
             "size": 0,
             "deleted_at": "2026-05-26T19:04:56.187387",
+            "is_expired": false
+        },
+        {
+            "name": "emprendimiento",
+            "item_type": "file",
+            "original_path": "root/emprendimiento",
+            "size": 6057268,
+            "deleted_at": "2026-05-27T18:15:50.154138",
             "is_expired": false
         }
     ]
