@@ -4,7 +4,7 @@ console.log("MAIN JS CARGADO");
 // CONFIG
 ////////////////////////////////////////////////////////////
 
-const API_URL = "http://127.0.0.1:8000";
+const API_URL = window.location.origin;
 
 ////////////////////////////////////////////////////////////
 // GLOBAL STATE
@@ -244,7 +244,7 @@ async function showTrashView() {
         tableBody.innerHTML = "";
 
         if (items.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="5">Papelera vacía</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="5">Papelera vacía</td></table>`;
             return;
         }
 
@@ -266,7 +266,7 @@ async function showTrashView() {
                 <td>
                     <button class="restore-trash-btn" data-name="${item.name}">Restaurar</button>
                     <button class="delete-permanent-btn" data-name="${item.name}">Eliminar</button>
-                </td>
+                 </td>
             `;
             tableBody.appendChild(row);
         });
@@ -317,7 +317,7 @@ async function showRecentFilesView() {
                         <div class="file-icon"><i class="fa-regular fa-file"></i></div>
                         ${file.name}
                     </div>
-                </td>
+                 </td>
                 <td>Archivo</td>
                 <td>${formattedDate}</td>
                 <td>${actionText}</td>
@@ -362,7 +362,7 @@ function renderDirectoryContent(data) {
     }
 
     if (data.directories.length === 0 && data.files.length === 0) {
-        tableBody.innerHTML = `<td><td colspan="5">Directorio vacío</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="5">Directorio vacío</td></tr>`;
         return;
     }
 
@@ -380,14 +380,14 @@ function renderDirectoryContent(data) {
                     <div class="file-icon"><i class="fa-regular fa-folder"></i></div>
                     ${directory.name}
                 </div>
-            </td>
+             </td>
             <td>Carpeta</td>
             <td>${createdDate}</td>
             <td>${sizeKB} KB</td>
             <td>
                 <button class="rename-directory-btn" data-dir-name="${directory.name}">Renombrar</button>
                 <button class="delete-directory-btn" data-dir-name="${directory.name}">Eliminar</button>
-            </td>
+             </td>
         `;
 
         row.onclick = (e) => {
@@ -416,7 +416,7 @@ function renderDirectoryContent(data) {
                     </div>
                     <div class="tags-container">${tagsHTML}</div>
                 </div>
-            </td>
+             </td>
             <td>Archivo</td>
             <td>${uploadedDate}</td>
             <td>${file.size ? (file.size / 1024).toFixed(2) + " KB" : "--"}</td>
@@ -424,7 +424,11 @@ function renderDirectoryContent(data) {
                 <button class="edit-tags-btn" data-file-name="${file.name}">Tags</button>
                 <button class="rename-file-btn" data-file-name="${file.name}">Renombrar</button>
                 <button class="delete-file-btn" data-file-name="${file.name}">Eliminar</button>
-            </td>
+                <button class="download-file-btn" data-file-name="${file.name}">📥 Descargar</button>
+                ${file.name.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i) ? 
+                    `<button class="preview-file-btn" data-file-name="${file.name}">👁️ Vista previa</button>` : 
+                    ''}
+             </td>
         `;
 
         tableBody.appendChild(row);
@@ -457,7 +461,7 @@ function renderOnlyDirectories(directories) {
                     <div class="file-icon"><i class="fa-regular fa-folder"></i></div>
                     ${directory.name}
                 </div>
-            </td>
+             </td>
             <td>Carpeta</td>
             <td>${createdDate}</td>
             <td>${sizeKB} KB</td>
@@ -567,7 +571,7 @@ function renderSearchResults(files) {
                     </div>
                     <div class="tags-container">${tagsHTML}</div>
                 </div>
-            </td>
+             </td>
             <td>Archivo</td>
             <td>${file.uploaded_at || "--"}</td>
             <td>${file.size ? (file.size / 1024).toFixed(2) + " KB" : "--"}</td>
@@ -598,11 +602,9 @@ async function uploadFile(file) {
 
         console.log("✅ Archivo subido");
 
-        // Restaurar carpeta
         currentDirectory = savedDirectory;
         lastDirectory = savedDirectory;
 
-        // RECARGAR MANUALMENTE como en showTrashView
         const contentResponse = await fetch(`${API_URL}/directory/content?path=${encodeURIComponent(savedDirectory)}`);
         const data = await contentResponse.json();
         
@@ -621,6 +623,7 @@ async function uploadFile(file) {
         lastDirectory = savedDirectory;
     }
 }
+
 ////////////////////////////////////////////////////////////
 // CRUD OPERATIONS
 ////////////////////////////////////////////////////////////
@@ -930,7 +933,6 @@ document.addEventListener("DOMContentLoaded", () => {
     loadRecentCount();
     renderBreadcrumbs(currentDirectory);
 
-    // Botones
     document.getElementById("new-folder-btn").addEventListener("click", async () => {
         const name = prompt("Nombre de la carpeta");
         if (name) await createDirectory(name);
@@ -944,7 +946,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("file-input").addEventListener("change", async (event) => {
         const file = event.target.files[0];
         if (file) await uploadFile(file);
-        event.target.value = ""; // Limpiar input
+        event.target.value = "";
     });
 
     document.querySelector(".search-box input").addEventListener("keydown", async (event) => {
@@ -989,7 +991,6 @@ document.addEventListener("DOMContentLoaded", () => {
         await loadDirectoryContent(currentDirectory);
     });
 
-    // Modales
     document.getElementById("close-tags-modal").addEventListener("click", closeTagsModal);
     document.getElementById("cancel-tags-btn").addEventListener("click", closeTagsModal);
     document.getElementById("save-tags-btn").addEventListener("click", saveFileTags);
@@ -1004,9 +1005,7 @@ document.addEventListener("DOMContentLoaded", () => {
         openTagsModal(currentEditingFile, currentEditingTags);
     });
 
-    // Delegación de eventos
     document.getElementById("table-body").addEventListener("click", async (event) => {
-        // Restaurar desde papelera
         const restoreBtn = event.target.closest(".restore-trash-btn");
         if (restoreBtn && currentView === "trash") {
             const name = restoreBtn.dataset.name;
@@ -1025,7 +1024,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        // Eliminar permanentemente
         const deletePermBtn = event.target.closest(".delete-permanent-btn");
         if (deletePermBtn && currentView === "trash") {
             const name = deletePermBtn.dataset.name;
@@ -1039,7 +1037,25 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        // Editar tags
+        const downloadBtn = event.target.closest(".download-file-btn");
+        if (downloadBtn) {
+            event.stopPropagation();
+            const fileName = downloadBtn.dataset.fileName;
+            const a = document.createElement("a");
+            a.href = `${API_URL}/download/${encodeURIComponent(fileName)}`;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        const previewBtn = event.target.closest(".preview-file-btn");
+        if (previewBtn) {
+            event.stopPropagation();
+            const fileName = previewBtn.dataset.fileName;
+            window.open(`${API_URL}/storage/uploads/${encodeURIComponent(fileName)}`, "_blank");
+        }
+
         const editTagsBtn = event.target.closest(".edit-tags-btn");
         if (editTagsBtn) {
             const fileName = editTagsBtn.dataset.fileName;
@@ -1049,7 +1065,6 @@ document.addEventListener("DOMContentLoaded", () => {
             openTagsModal(fileName, tags);
         }
 
-        // Renombrar directorio
         const renameDirectoryBtn = event.target.closest(".rename-directory-btn");
         if (renameDirectoryBtn) {
             event.stopPropagation();
@@ -1058,7 +1073,6 @@ document.addEventListener("DOMContentLoaded", () => {
             if (newName && newName !== dirName) await renameDirectory(dirName, newName);
         }
 
-        // Eliminar directorio
         const deleteDirectoryBtn = event.target.closest(".delete-directory-btn");
         if (deleteDirectoryBtn) {
             event.stopPropagation();
@@ -1066,7 +1080,6 @@ document.addEventListener("DOMContentLoaded", () => {
             await deleteDirectory(dirName);
         }
 
-        // Renombrar archivo
         const renameFileBtn = event.target.closest(".rename-file-btn");
         if (renameFileBtn) {
             event.stopPropagation();
@@ -1075,7 +1088,6 @@ document.addEventListener("DOMContentLoaded", () => {
             if (newName && newName !== fileName) await renameFile(fileName, newName);
         }
 
-        // Eliminar archivo
         const deleteFileBtn = event.target.closest(".delete-file-btn");
         if (deleteFileBtn) {
             event.stopPropagation();

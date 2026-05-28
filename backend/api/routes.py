@@ -1,5 +1,6 @@
 from backend.services.system_instance import fs, trash
 
+
 import os
 import shutil
 
@@ -8,6 +9,7 @@ from fastapi import (
     UploadFile,
     File
 )
+from fastapi.responses import FileResponse
 
 router = APIRouter()
 
@@ -631,3 +633,21 @@ def get_trash_detail():
         "items": [item.to_dict() for item in items],
         "count": len(items)
     }
+
+#######################################################
+# DOWNLOAD FILE
+#######################################################
+
+@router.get("/download/{filename}")
+def download_file(filename: str):
+    """Descargar un archivo por su nombre"""
+    file_path = f"storage/uploads/{filename}"
+    
+    if not os.path.exists(file_path):
+        return {"error": "File not found"}
+    
+    return FileResponse(
+        path=file_path,
+        filename=filename,
+        media_type="application/octet-stream"
+    )
