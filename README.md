@@ -1,6 +1,6 @@
 # 📁 FLIEDRIVE - Gestor de Archivos Local (Web)
 
-Un gestor de archivos local basado en **FastAPI** que permite crear, organizar y gestionar archivos y carpetas con soporte para versionado y búsqueda por etiquetas. **Ahora con interfaz web integrada (HTML, CSS, JavaScript)**.
+Un gestor de archivos local basado en **FastAPI** que permite crear, organizar y gestionar archivos y carpetas con soporte para versionado y búsqueda por etiquetas. **Ahora con interfaz web integrada y soporte multi-lenguaje**.
 
 ##  Tabla de Contenidos
 
@@ -26,6 +26,7 @@ Un gestor de archivos local basado en **FastAPI** que permite crear, organizar y
 - ✅ API REST con FastAPI
 - ✅ **Interfaz Web (Frontend integrado)** - HTML, CSS, JavaScript
 - ✅ **Búsqueda Avanzada** - Filtros por nombre y etiquetas
+- ✅ **Soporte Multi-Lenguaje** - Integración con C++ y Papyrus
 - 🔜 Compartir archivos con links
 - 🔜 Persistencia en base de datos
 
@@ -33,13 +34,14 @@ Un gestor de archivos local basado en **FastAPI** que permite crear, organizar y
 
 ##  Novedades - Mayo 2026
 
-###  Últimos Cambios (15/05/2026)
+###  Últimos Cambios (28/05/2026)
 
 #### Backend
 - ✅ **Unificación completada:** Se han integrado todos los cambios finales antes de la unificación con Frontend
 - ✅ **Sistema de etiquetas mejorado:** Funcionamiento optimizado y búsqueda por tags
 - ✅ **Búsqueda avanzada:** Implementada con filtros dinámicos
 - ✅ **Endpoints API finalizados:** Todos los endpoints REST están funcionales y documentados
+- ✅ **Soporte multi-lenguaje:** Integración con módulos en C++ y Papyrus
 
 #### Frontend  
 - ✅ **Interfaz web completa:** Interfaz HTML, CSS y JavaScript integrada
@@ -47,33 +49,39 @@ Un gestor de archivos local basado en **FastAPI** que permite crear, organizar y
 - ✅ **Búsqueda avanzada en UI:** Interfaz visual para búsqueda y filtrado
 - ✅ **Gestión visual de archivos:** Visualización y manipulación de estructura de directorios
 - ✅ **Sistema de etiquetas visual:** Interfaz para agregar y filtrar etiquetas
+- ✅ **Diseño responsivo:** Interfaz adaptada a diferentes dispositivos
 
 #### Composición del Proyecto
--  CSS: 37.5%
--  Python: 36%
--  HTML: 20.9%
--  JavaScript: 5.6%
+-  JavaScript: 29.5%
+-  Python: 27.6%
+-  HTML: 13.8%
+-  Papyrus: 11%
+-  C++: 9.4%
+-  CSS: 8.7%
 
 ---
 
 ##  Arquitectura
 
-El proyecto sigue un patrón de **arquitectura en capas**:
+El proyecto sigue un patrón de **arquitectura en capas con soporte multi-lenguaje**:
 
 ```
 ┌──────────────────────────────────────┐
 │    HTTP Client / Frontend (Web)      │
-│  (HTML, CSS, JavaScript)             │
+│  (HTML, CSS, JavaScript - 29.5%)     │
 └────────────────┬─────────────────────┘
                  │
 ┌────────────────▼──────────────────────┐
 │   FastAPI Router (API Endpoints)      │
 │      backend/api/routes.py            │
+│       (Python - 27.6%)                │
 └────────────────┬──────────────────────┘
                  │
 ┌────────────────▼──────────────────────┐
 │   FileSystem Service (Lógica)         │
 │   backend/services/file_system.py     │
+│   + Módulos optimizados (C++ - 9.4%)  │
+│   + Scripts Papyrus (11%)             │
 └────────────────┬──────────────────────┘
                  │
 ┌────────────────▼──────────────────────┐
@@ -89,6 +97,8 @@ El proyecto sigue un patrón de **arquitectura en capas**:
 ### Requisitos Previos
 - Python 3.8+
 - pip
+- Node.js (opcional, para desarrollo del frontend)
+- Compilador C++ (para módulos nativos)
 
 ### Pasos de Instalación
 
@@ -97,13 +107,16 @@ El proyecto sigue un patrón de **arquitectura en capas**:
 git clone https://github.com/JoshLeng/file_system_project.git
 cd file_system_project
 
-# 2. Instalar dependencias
+# 2. Instalar dependencias Python
 pip install -r requirements.txt
 
-# 3. Iniciar el servidor FastAPI
+# 3. Compilar módulos C++ (opcional)
+# cd backend/cpp_modules && make build
+
+# 4. Iniciar el servidor FastAPI
 uvicorn backend.main:app --reload
 
-# 4. Acceder a la interfaz web
+# 5. Acceder a la interfaz web
 # Abrir en navegador: http://localhost:8000
 ```
 
@@ -143,7 +156,7 @@ curl http://localhost:8000/directories
 ```
 **Respuesta:**
 ```json
-["documents", "images"]
+["documents", "images", "projects"]
 ```
 
 #### 3. Crear una carpeta
@@ -187,15 +200,25 @@ file_system_project/
 │   │   ├── directory.py           # Modelo Directory
 │   │   ├── file.py                # Modelo File
 │   │   └── version.py             # Modelo Version
-│   └── services/
-│       ├── __init__.py
-│       ├── file_system.py         # Lógica principal
-│       └── system_instance.py     # Instancia global
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── file_system.py         # Lógica principal
+│   │   └── system_instance.py     # Instancia global
+│   ├── cpp_modules/               # Módulos optimizados C++
+│   │   ├── __init__.py
+│   │   ├── file_operations.cpp    # Operaciones optimizadas
+│   │   └── Makefile
+│   └── papyrus_scripts/           # Scripts Papyrus
+│       └── automation.psc
 ├── frontend/
-│   ├── index.html                 # Interfaz principal
-│   ├── styles.css                 # Estilos de la UI
-│   ├── script.js                  # Lógica del Frontend
+│   ├── index.html                 # Interfaz principal (13.8%)
+│   ├── styles.css                 # Estilos de la UI (8.7%)
+│   ├── script.js                  # Lógica del Frontend (29.5%)
 │   └── assets/                    # Recursos estáticos
+├── tests/                         # Suite de pruebas
+│   ├── test_file_system.py
+│   ├── test_api.py
+│   └── test_frontend.js
 ├── README.md                      # Este archivo
 └── requirements.txt               # Dependencias Python
 ```
@@ -219,7 +242,7 @@ Obtiene todos los directorios en la raíz del sistema.
 
 **Respuesta:**
 ```json
-["documents", "images"]
+["documents", "images", "projects"]
 ```
 
 ---
@@ -306,6 +329,8 @@ class Directory:
     name: str                    # Nombre del directorio
     subdirectories: List[Directory]  # Directorios anidados
     files: List[File]           # Archivos contenidos
+    created_at: datetime        # Fecha de creación
+    metadata: Dict              # Información adicional
 ```
 
 **Propósito:** Representa la estructura jerárquica del sistema de archivos usando un **árbol n-ario**.
@@ -320,12 +345,15 @@ class File:
     tags: List[str]            # Etiquetas para búsqueda
     versions: List[Version]    # Historial de versiones
     shared_link: str | None    # Link de compartición (futuro)
+    created_at: datetime       # Fecha de creación
+    updated_at: datetime       # Última actualización
 ```
 
 **Métodos:**
 - `add_version(content)`: Agrega una nueva versión
 - `add_tag(tag)`: Agrega una etiqueta
 - `get_versions()`: Obtiene el historial de versiones
+- `search_tags(tag)`: Busca por etiqueta
 
 **Propósito:** Representa un archivo lógico con capacidad de versionado y búsqueda por etiquetas.
 
@@ -338,6 +366,7 @@ class Version:
     version_number: int    # Número secuencial (1, 2, 3...)
     content: str          # Contenido del archivo
     timestamp: datetime   # Marca de tiempo de creación
+    author: str          # Autor del cambio (futuro)
 ```
 
 **Propósito:** Almacena cada versión de un archivo con su contenido y timestamp.
@@ -379,11 +408,14 @@ Cliente                    API                FileSystem              Models
 - ✅ **Interfaz Frontend (HTML, CSS, JavaScript)**
 - ✅ **Integración Frontend-Backend**
 - ✅ **Búsqueda Avanzada en UI**
+- ✅ **Módulos C++ para optimización**
+- ✅ **Scripts Papyrus para automatización**
 
 ### 🔄 En Progreso
 - Optimización de rendimiento
 - Validación de entrada mejorada
-- Tests unitarios
+- Tests unitarios y de integración
+- Documentación de API avanzada
 
 ### 🔜 Próximas Mejoras
 - **Persistencia en BD:** SQLite, PostgreSQL o MongoDB
@@ -393,6 +425,7 @@ Cliente                    API                FileSystem              Models
 - **Sincronización en tiempo real:** WebSockets para actualizaciones en vivo
 - **Exportación de datos:** Descarga de archivos y directorios
 - **Temas personalizables:** Modo oscuro/claro en el frontend
+- **Caché distribuido:** Redis para mejorar performance
 
 ---
 
@@ -407,7 +440,8 @@ from backend.services.system_instance import fs
 # Estructura inicial:
 # root/
 #  ├── documents
-#  └── images
+#  ├── images
+#  └── projects
 
 # 2. Buscar un directorio
 docs_dir = fs.get_directory_by_path("/root/documents")
@@ -437,6 +471,7 @@ resultados = fs.search_by_tag(fs.root, "importante")
    - Agregar etiquetas a archivos
    - Buscar archivos por nombre o etiqueta
    - Ver el historial de versiones
+   - Gestionar permisos y comparticiones
 
 ---
 
@@ -450,7 +485,7 @@ Este proyecto está bajo licencia de **FLIE DRIVE™**
 
 - **Kevin Xulú** - Desarrollo Backend
 - **Josué Godínez** - Desarrollo Backend
-- **JoshLeng** ([@JoshLeng](https://github.com/JoshLeng)) - Coordinación y Frontend
+- **JoshLeng** ([@JoshLeng](https://github.com/JoshLeng)) - Coordinación, Frontend e Integración
 
 ---
 
@@ -458,16 +493,13 @@ Este proyecto está bajo licencia de **FLIE DRIVE™**
 
 | Fecha | Versión | Cambio |
 |-------|---------|--------|
-| 2026-05-15 | 2.0 |  Unificación completada: Frontend integrado con Backend |
-| 2026-05-09 | 1.5 |  Mejora de estructura y documentación |
-| 2026-05-08 | 1.0 |  Lanzamiento inicial con API REST |
+| 2026-05-28 | 2.1 | Actualización de documentación y composición de lenguajes |
+| 2026-05-15 | 2.0 | Unificación completada: Frontend integrado con Backend |
+| 2026-05-09 | 1.5 | Mejora de estructura y documentación |
+| 2026-05-08 | 1.0 | Lanzamiento inicial con API REST |
 
 ---
 
-**Última actualización:** 2026-05-16
-
----
-
-
+**Última actualización:** 2026-05-28
 
 ---
