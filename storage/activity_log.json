@@ -1,32 +1,14 @@
 [
     {
         "user": "ana",
-        "action": "subió archivo",
-        "item": "qué es emprendimiento.png",
-        "timestamp": "2026-05-27T18:11:27.483472"
+        "action": "eliminó archivo",
+        "item": "ecuación.cpp",
+        "timestamp": "2026-05-27T19:41:58.719575"
     },
     {
         "user": "ana",
         "action": "eliminó archivo",
-        "item": "emprendimiento",
-        "timestamp": "2026-05-27T18:15:50.162364"
-    },
-    {
-        "user": "ana",
-        "action": "compartió archivo",
-        "item": "images (1).jpeg",
-        "timestamp": "2026-05-27T18:42:12.818757"
-    },
-    {
-        "user": "ana",
-        "action": "compartió archivo",
-        "item": "images (1).jpeg",
-        "timestamp": "2026-05-27T18:54:29.503671"
-    },
-    {
-        "user": "ana",
-        "action": "compartió archivo",
-        "item": "Ejemplos Diodo de Unión.pdf",
-        "timestamp": "2026-05-27T18:54:56.324174"
+        "item": "Diseño sin título.png",
+        "timestamp": "2026-05-27T19:42:31.831680"
     }
 ]

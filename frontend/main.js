@@ -133,7 +133,7 @@ function renderSidebar(directory, container = null) {
         await loadDirectoryContent(currentDirectory);
         
         document.getElementById("dashboard-view-btn").classList.add("active");
-        document.getElementById("directories-view-btn").classList.remove("active");
+        //document.getElementById("directories-view-btn").classList.remove("active");
         setTableHeaders("dashboard");
     };
 
@@ -1073,23 +1073,23 @@ document.addEventListener("DOMContentLoaded", () => {
         currentView = "dashboard";
         currentDirectory = lastDirectory;
         
-        document.getElementById("dashboard-view-btn").classList.add("active");
-        document.getElementById("directories-view-btn").classList.remove("active");
+       // document.getElementById("dashboard-view-btn").classList.add("active");
+       // document.getElementById("directories-view-btn").classList.remove("active");
         
         setTableHeaders("dashboard");
         await loadDirectoryContent(currentDirectory);
     });
 
-    document.getElementById("directories-view-btn").addEventListener("click", async () => {
-        currentView = "directories";
-        currentDirectory = lastDirectory;
+   // document.getElementById("directories-view-btn").addEventListener("click", async () => {
+      //  currentView = "directories";
+      //  currentDirectory = lastDirectory;
         
-        document.getElementById("directories-view-btn").classList.add("active");
-        document.getElementById("dashboard-view-btn").classList.remove("active");
+      //  document.getElementById("directories-view-btn").classList.add("active");
+       // document.getElementById("dashboard-view-btn").classList.remove("active");
         
-        setTableHeaders("dashboard");
-        await loadDirectoryContent(currentDirectory);
-    });
+       // setTableHeaders("dashboard");
+      //  await loadDirectoryContent(currentDirectory);
+   // });
 
     document.getElementById("close-tags-modal").addEventListener("click", closeTagsModal);
     document.getElementById("cancel-tags-btn").addEventListener("click", closeTagsModal);
