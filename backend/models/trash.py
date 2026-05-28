@@ -49,7 +49,8 @@ class TrashSystem:
 
     def get_all(self):
         self.clean_expired()
-        return self.items
+        # Ordenar por fecha descendente (más reciente primero)
+        return sorted(self.items, key=lambda x: x.deleted_at, reverse=True)
 
     def restore(self, name):
         for i, item in enumerate(self.items):

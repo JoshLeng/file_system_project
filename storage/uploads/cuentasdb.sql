@@ -1,100 +1,112 @@
--- para que no haya problema con los otros docuementos nombrados cuentasdb
-DROP DATABASE IF EXISTS cuentasdb;
-DROP USER IF EXISTS 'userventadsb'@'localhost';
+CREATE DATABASE  IF NOT EXISTS `cuentasdb` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+USE `cuentasdb`;
+-- MySQL dump 10.13  Distrib 8.0.36, for Win64 (x86_64)
+--
+-- Host: localhost    Database: cuentasdb
+-- ------------------------------------------------------
+-- Server version	8.3.0
 
-CREATE DATABASE cuentasdb;
-USE cuentasdb;
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!50503 SET NAMES utf8 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
-CREATE USER 'userventadsb'@'localhost' IDENTIFIED BY 'Us3rprogra2025';
-GRANT ALL PRIVILEGES ON cuentasdb.* TO 'userventadsb'@'localhost';
-FLUSH PRIVILEGES;
+--
+-- Table structure for table `cuenta`
+--
 
+DROP TABLE IF EXISTS `cuenta`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `cuenta` (
+  `IdCuenta` int NOT NULL AUTO_INCREMENT,
+  `NoCuenta` varchar(10) DEFAULT NULL,
+  `FechaApertura` datetime DEFAULT NULL,
+  `MontoInicial` float DEFAULT NULL,
+  `Saldo` float DEFAULT NULL,
+  `IdCuentaHabiente` int DEFAULT NULL,
+  PRIMARY KEY (`IdCuenta`),
+  KEY `IdCuentaHabiente` (`IdCuentaHabiente`),
+  CONSTRAINT `cuenta_ibfk_1` FOREIGN KEY (`IdCuentaHabiente`) REFERENCES `cuentahabiente` (`IdCuentaHabiente`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
--- creacion de tablas
+--
+-- Dumping data for table `cuenta`
+--
 
-CREATE TABLE CuentasBancarias (
-    id_cuenta INT AUTO_INCREMENT PRIMARY KEY,
-    numero_cuenta VARCHAR(20) NOT NULL UNIQUE,
-    usuario VARCHAR(100) NOT NULL,
-    dpi varchar (20),
-    telefono varchar(8),
-    gmail varchar(30),
-    direccion varchar(30),
-    estado_de_cuenta DECIMAL(12,2) NOT NULL DEFAULT 0.00,
-    estado ENUM("activa","desactivada") NOT NULL
-);
+LOCK TABLES `cuenta` WRITE;
+/*!40000 ALTER TABLE `cuenta` DISABLE KEYS */;
+/*!40000 ALTER TABLE `cuenta` ENABLE KEYS */;
+UNLOCK TABLES;
 
-CREATE TABLE Movimientos (
-    id_movimiento INT AUTO_INCREMENT PRIMARY KEY,
-    id_cuenta INT NOT NULL,
-    usuario varchar(100),
-    fecha_movimiento DATETIME NOT NULL,
-    tipo_movimiento ENUM('Deposito','Retiro','Transferencia') NOT NULL,
-	-- acá se agregará el monto en el punto de alterar una tabla
-    FOREIGN KEY (id_cuenta) REFERENCES CuentasBancarias(id_cuenta)
-);
+--
+-- Table structure for table `cuentahabiente`
+--
 
+DROP TABLE IF EXISTS `cuentahabiente`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `cuentahabiente` (
+  `IdCuentaHabiente` int NOT NULL AUTO_INCREMENT,
+  `Nombre` varchar(50) NOT NULL,
+  `Dpi` varchar(16) DEFAULT NULL,
+  `Pasaporte` varchar(25) DEFAULT NULL,
+  PRIMARY KEY (`IdCuentaHabiente`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
--- alteración de 2 tablas
--- en cuentas bancarias se agregará el campo fecha de creación
-ALTER TABLE CuentasBancarias 
-    ADD COLUMN fecha_creacion DATE NOT NULL DEFAULT (CURRENT_DATE);
--- y en la tabla movimientos se agregará el campo monto
-ALTER TABLE Movimientos 
-    ADD COLUMN monto DECIMAL(12,2) NOT NULL DEFAULT 0.00;
-    
--- Inseción de datos para prueba
-INSERT INTO CuentasBancarias (numero_cuenta, usuario, dpi, telefono, gmail, direccion, estado_de_cuenta, estado, fecha_creacion)
-VALUES 
-('1001','Marta Sandoval','1234567890101','5551234','marta@gmail.com','Zona 1','2500.00','activa','2023-01-15'),
-('1002','María López','1234567890102','5552345','maria@gmail.com','Zona 2','1800.50','activa','2023-02-10'),
-('1003','Carlos Gómez','1234567890103','5553456','carlos@gmail.com','Zona 3','3200.75','activa','2023-03-20'),
-('1004','Antony Contreras','1234567890104','5554567','antony@gmail.com','Zona 4','500.00','activa','2023-04-05'),
-('1005','Mario Ramírez','1234567890105','5555678','mario@gmail.com','Zona 5','750.00','desactivada','2023-05-18'),
-('1006','Sofía Morales','1234567890106','5556789','sofia@gmail.com','Zona 6','920.25','activa','2023-06-22'),
-('1007','Pedro Sanches','1234567890107','5557890','pedro@gmail.com','Zona 7','1200.00','activa','2023-07-30');
+--
+-- Dumping data for table `cuentahabiente`
+--
 
-INSERT INTO Movimientos (id_cuenta, fecha_movimiento, tipo_movimiento, monto)
-VALUES
-(1,'2023-08-01 10:30:00','Deposito',500.00),
-(1,'2023-08-02 12:15:00','Retiro',200.00),
-(2,'2023-08-03 09:45:00','Deposito',1000.00),
-(3,'2023-08-04 14:00:00','Retiro',500.00),
-(4,'2023-08-05 16:20:00','Transferencia',300.00),
-(5,'2023-08-06 11:00:00','Deposito',400.00),
-(6,'2023-08-07 18:10:00','Retiro',150.00);	
+LOCK TABLES `cuentahabiente` WRITE;
+/*!40000 ALTER TABLE `cuentahabiente` DISABLE KEYS */;
+INSERT INTO `cuentahabiente` VALUES (1,'Adolfo','0123456',''),(2,'Alex','45689','696598712559'),(3,'Jose','415785','5698653-56989'),(4,'Pedro','956896585','6565'),(5,'Enrique','0188456','65956'),(6,'Luis','2359895656','ACDF6656'),(7,'Byron','0213545','PAS456789');
+/*!40000 ALTER TABLE `cuentahabiente` ENABLE KEYS */;
+UNLOCK TABLES;
 
--- actualización de alunos registros
+--
+-- Table structure for table `movimientos`
+--
 
--- ///	actualizaciones
--- En cuentas: aumentar saldo a marta
-UPDATE CuentasBancarias 
-SET estado_de_cuenta = estado_de_cuenta + 1000 
-WHERE id_cuenta = 1;
+DROP TABLE IF EXISTS `movimientos`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `movimientos` (
+  `IdMovinmiento` int NOT NULL AUTO_INCREMENT,
+  `Tipo` varchar(15) NOT NULL,
+  `Monto` float DEFAULT NULL,
+  `Fecha` datetime DEFAULT NULL,
+  `IdCuenta` int NOT NULL,
+  PRIMARY KEY (`IdMovinmiento`),
+  KEY `IdCuenta` (`IdCuenta`),
+  CONSTRAINT `movimientos_ibfk_1` FOREIGN KEY (`IdCuenta`) REFERENCES `cuenta` (`IdCuenta`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
--- En cuentas: cambiar estado de mario a activa
-UPDATE CuentasBancarias 
-SET estado = 'activa' 
-WHERE id_cuenta = 5;
+--
+-- Dumping data for table `movimientos`
+--
 
--- //eliminaciones
+LOCK TABLES `movimientos` WRITE;
+/*!40000 ALTER TABLE `movimientos` DISABLE KEYS */;
+/*!40000 ALTER TABLE `movimientos` ENABLE KEYS */;
+UNLOCK TABLES;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
-DELETE FROM Movimientos WHERE id_movimiento = 2;
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
-
--- /////SELECT PARA UNIR AMBAS TABLAS
-SELECT 
-    c.id_cuenta, 
-    c.usuario, 
-    c.numero_cuenta, 
-    c.estado_de_cuenta, 
-    m.id_movimiento, 
-    m.fecha_movimiento, 
-    m.tipo_movimiento, 
-    m.monto
-FROM CuentasBancarias c
-INNER JOIN Movimientos m ON c.id_cuenta = m.id_cuenta
-ORDER BY c.id_cuenta, m.fecha_movimiento;
-
-
-
+-- Dump completed on 2025-10-04  7:54:09

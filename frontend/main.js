@@ -6,7 +6,16 @@ console.log("MAIN JS CARGADO");
 
 const API_URL = window.location.origin;
 
-
+// FUNCIÓN PARA ACTUALIZAR RECIENTES
+async function refreshRecentCount() {
+    try {
+        const response = await fetch(`${API_URL}/recent/files`);
+        const data = await response.json();
+        document.getElementById("recent-files-count").textContent = data.count || 0;
+    } catch (error) {
+        console.error("Error refreshing recent count:", error);
+    }
+}
 
 // LOG DE ACTIVIDADES
 let currentUser = null;
@@ -366,7 +375,8 @@ async function showRecentFilesView() {
                 "file_created": "Creado",
                 "uploaded": "Subido",
                 "renamed": "Renombrado",
-                "deleted": "Eliminado"
+                "deleted": "Eliminado",
+                "restored":"Restaurado"
             }[file.action] || file.action;
 
             const formattedDate = new Date(file.timestamp).toLocaleString("es-ES");
@@ -683,6 +693,7 @@ async function uploadFile(file) {
         currentDirectory = savedDirectory;
         lastDirectory = savedDirectory;
     }
+    await refreshRecentCount();
 }
 
 ////////////////////////////////////////////////////////////
@@ -737,6 +748,7 @@ async function createFile(name) {
         console.error("Error creating file:", error);
         alert("Error al crear el archivo");
     }
+    await refreshRecentCount();
 }
 
 async function renameDirectory(oldName, newName) {
@@ -785,6 +797,7 @@ async function renameFile(oldName, newName) {
         console.error("Error renaming file:", error);
         alert("Error al renombrar el archivo");
     }
+    await refreshRecentCount();
 }
 
 async function deleteDirectory(name) {
@@ -838,6 +851,7 @@ async function deleteFile(name) {
         console.error("Error deleting file:", error);
         alert("Error al eliminar el archivo");
     }
+    await refreshRecentCount();
 }
 
 ////////////////////////////////////////////////////////////
@@ -1107,22 +1121,34 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById("table-body").addEventListener("click", async (event) => {
         const restoreBtn = event.target.closest(".restore-trash-btn");
-        if (restoreBtn && currentView === "trash") {
-            const name = restoreBtn.dataset.name;
-            if (confirm(`¿Restaurar "${name}"?`)) {
-                const response = await fetch(`${API_URL}/trash/restore`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ name: name })
-                });
-                const result = await response.json();
-                if (result.success) {
-                    await loadDirectoryContent(currentDirectory);
-                    await refreshSidebar();
-                    await loadTrashCount();
-                }
+if (restoreBtn && currentView === "trash") {
+    const name = restoreBtn.dataset.name;
+    if (confirm(`¿Restaurar "${name}"?`)) {
+        const response = await fetch(`${API_URL}/trash/restore`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: name })
+        });
+        const result = await response.json();
+        if (result.success) {
+            // Navegar a la ubicación original
+            if (result.restored_path) {
+                currentDirectory = result.restored_path;
+                lastDirectory = currentDirectory;
+                currentView = "dashboard";
+                setTableHeaders("dashboard");
+                await loadDirectoryContent(currentDirectory);
+                renderBreadcrumbs(currentDirectory);
+            } else {
+                await loadDirectoryContent(currentDirectory);
             }
+            await refreshSidebar();
+            await loadTrashCount();
+            await refreshRecentCount();
+            alert(`✅ "${name}" restaurado correctamente`);
         }
+    }
+}
 
         const deletePermBtn = event.target.closest(".delete-permanent-btn");
         if (deletePermBtn && currentView === "trash") {

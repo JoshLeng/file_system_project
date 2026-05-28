@@ -1,39 +1,21 @@
 {
     "root": {
-        "id": "cfbaa34f-d156-48ce-9f94-741530e2c700",
+        "id": "50cf2195-bda3-4d75-96a2-31d58c9ceb78",
         "name": "root",
         "path": "root",
         "created_at": "2026-05-25T19:36:33.714774",
-        "updated_at": "2026-05-27T18:54:15.897868",
-        "size": 8144769,
+        "updated_at": "2026-05-27T20:44:09.561077",
+        "size": 4465033,
         "subdirectories": [
             {
-                "id": "24f8a10b-9744-4d40-9c53-9736857fc77f",
+                "id": "b474bc97-529e-4791-9505-05abe8b436ad",
                 "name": "documentos",
                 "path": "root/documentos",
                 "created_at": "2026-05-26T08:27:52.734468",
-                "updated_at": "2026-05-27T18:54:15.897893",
-                "size": 8144769,
+                "updated_at": "2026-05-27T20:44:09.561106",
+                "size": 4359207,
                 "subdirectories": [],
                 "files_data": [
-                    {
-                        "name": "Ejemplos Diodo de Uni\u00f3n.pdf",
-                        "real_path": "storage/uploads\\Ejemplos Diodo de Uni\u00f3n.pdf",
-                        "size": 3780954,
-                        "tags": [
-                            "electronica"
-                        ],
-                        "uploaded_at": "2026-05-26T09:14:10.725450"
-                    },
-                    {
-                        "name": "algoritmos.cpp",
-                        "real_path": "storage/uploads\\algoritmos.cpp",
-                        "size": 8985,
-                        "tags": [
-                            "code"
-                        ],
-                        "uploaded_at": "2026-05-26T19:07:23.036180"
-                    },
                     {
                         "name": "Captura de pantalla 2026-05-21 061323.png",
                         "real_path": "storage/uploads\\Captura de pantalla 2026-05-21 061323.png",
@@ -56,83 +38,186 @@
                         "size": 3405869,
                         "tags": [],
                         "uploaded_at": "2026-05-27T19:42:35.314690"
+                    },
+                    {
+                        "name": "algoritmos.cpp",
+                        "real_path": "",
+                        "size": 0,
+                        "tags": [],
+                        "uploaded_at": "2026-05-27T19:54:49.980604"
+                    },
+                    {
+                        "name": "cuentasdb.sql",
+                        "real_path": "storage/uploads\\cuentasdb.sql",
+                        "size": 4377,
+                        "tags": [
+                            "db"
+                        ],
+                        "uploaded_at": "2026-05-27T19:55:23.510296"
                     }
                 ]
             },
             {
-                "id": "b35c6275-2cd0-46a0-a7dc-9ca812d89b74",
+                "id": "fd7467ca-73af-47ce-9e5a-fc3a3d47b75e",
                 "name": "videos",
                 "path": "root/videos",
                 "created_at": "2026-05-26T19:00:50.213679",
-                "updated_at": "2026-05-27T18:54:15.897912",
+                "updated_at": "2026-05-27T20:44:09.561124",
                 "size": 0,
                 "subdirectories": [],
-                "files_data": []
+                "files_data": [
+                    {
+                        "name": "comparaci\u00f3n 3 num.cpp",
+                        "real_path": "",
+                        "size": 0,
+                        "tags": [],
+                        "uploaded_at": "2026-05-27T20:41:13.109626"
+                    }
+                ]
             }
         ],
-        "files_data": []
+        "files_data": [
+            {
+                "name": "Captura de pantalla 2026-05-27 183024.png",
+                "real_path": "storage/uploads\\Captura de pantalla 2026-05-27 183024.png",
+                "size": 3591,
+                "tags": [
+                    "prueba4"
+                ],
+                "uploaded_at": "2026-05-27T20:24:24.660631"
+            },
+            {
+                "name": "Captura de pantalla 2026-05-27 183024.png",
+                "real_path": "storage/uploads\\Captura de pantalla 2026-05-27 183024.png",
+                "size": 3591,
+                "tags": [
+                    "prueba6"
+                ],
+                "uploaded_at": "2026-05-27T20:39:29.235148"
+            },
+            {
+                "name": "Captura de pantalla 2026-05-26 174004.png",
+                "real_path": "storage/uploads\\Captura de pantalla 2026-05-26 174004.png",
+                "size": 92001,
+                "tags": [
+                    "prueba7"
+                ],
+                "uploaded_at": "2026-05-27T20:39:53.036340"
+            },
+            {
+                "name": "Captura de pantalla 2026-05-25 193939.png",
+                "real_path": "storage/uploads\\Captura de pantalla 2026-05-25 193939.png",
+                "size": 6643,
+                "tags": [
+                    "prueba7"
+                ],
+                "uploaded_at": "2026-05-27T20:40:14.065542"
+            }
+        ]
     },
     "recent": [
         {
-            "name": "emprendimiento",
-            "action": "renamed",
-            "timestamp": "2026-05-27T18:15:27.468986"
-        },
-        {
-            "name": "emprendimiento",
-            "action": "deleted",
-            "timestamp": "2026-05-27T18:15:50.154161"
-        },
-        {
-            "name": "Dise\u00f1o sin t\u00edtulo.png",
+            "name": "Captura de pantalla 2026-05-26 193553.png",
             "action": "uploaded",
-            "timestamp": "2026-05-27T19:15:29.078589"
+            "timestamp": "2026-05-27T20:04:37.702176"
         },
         {
-            "name": "images (1).jpeg",
+            "name": "Captura de pantalla 2026-05-27 183024.png",
+            "action": "uploaded",
+            "timestamp": "2026-05-27T20:04:51.865558"
+        },
+        {
+            "name": "Captura de pantalla 2026-05-27 183024.png",
+            "action": "uploaded",
+            "timestamp": "2026-05-27T20:07:37.978425"
+        },
+        {
+            "name": "Captura de pantalla 2026-05-27 183024.png",
             "action": "deleted",
-            "timestamp": "2026-05-27T19:15:58.329605"
+            "timestamp": "2026-05-27T20:08:06.853317"
         },
         {
-            "name": "documentos",
-            "action": "renamed",
-            "timestamp": "2026-05-27T19:17:17.050897"
-        },
-        {
-            "name": "ecuaci\u00f3n.cpp",
+            "name": "Captura de pantalla 2026-05-27 183024.png",
             "action": "deleted",
-            "timestamp": "2026-05-27T19:41:58.710285"
+            "timestamp": "2026-05-27T20:08:13.860160"
         },
         {
-            "name": "ecuaci\u00f3n.cpp",
+            "name": "Captura de pantalla 2026-05-27 183024.png",
+            "action": "deleted",
+            "timestamp": "2026-05-27T20:08:19.819861"
+        },
+        {
+            "name": "Captura de pantalla 2026-05-27 183024.png",
+            "action": "deleted",
+            "timestamp": "2026-05-27T20:08:29.547207"
+        },
+        {
+            "name": "cofi.png",
+            "action": "deleted",
+            "timestamp": "2026-05-27T20:23:26.714252"
+        },
+        {
+            "name": "Captura de pantalla 2026-05-27 183024.png",
+            "action": "uploaded",
+            "timestamp": "2026-05-27T20:24:24.660660"
+        },
+        {
+            "name": "Captura de pantalla 2026-05-26 193553.png",
+            "action": "deleted",
+            "timestamp": "2026-05-27T20:39:10.445632"
+        },
+        {
+            "name": "Captura de pantalla 2026-05-27 183024.png",
+            "action": "uploaded",
+            "timestamp": "2026-05-27T20:39:29.235161"
+        },
+        {
+            "name": "Captura de pantalla 2026-05-26 174004.png",
+            "action": "uploaded",
+            "timestamp": "2026-05-27T20:39:53.036358"
+        },
+        {
+            "name": "Captura de pantalla 2026-05-25 193939.png",
+            "action": "uploaded",
+            "timestamp": "2026-05-27T20:40:14.065552"
+        },
+        {
+            "name": "prueba1.pdf",
             "action": "file_created",
-            "timestamp": "2026-05-27T19:42:11.324354"
+            "timestamp": "2026-05-27T20:40:34.494488"
         },
         {
-            "name": "Dise\u00f1o sin t\u00edtulo.png",
-            "action": "deleted",
-            "timestamp": "2026-05-27T19:42:31.822661"
+            "name": "ejercicio positivo o negativo.cpp",
+            "action": "uploaded",
+            "timestamp": "2026-05-27T20:40:55.077857"
         },
         {
-            "name": "Dise\u00f1o sin t\u00edtulo.png",
+            "name": "comparaci\u00f3n 3 num.cpp",
             "action": "file_created",
-            "timestamp": "2026-05-27T19:42:35.314706"
+            "timestamp": "2026-05-27T20:41:13.109633"
         },
         {
-            "name": "ecuaciones diferenciales",
-            "action": "renamed",
-            "timestamp": "2026-05-27T19:43:30.727942"
+            "name": "comparaci\u00f3n 3 num.cpp",
+            "action": "restored",
+            "timestamp": "2026-05-27T20:41:13.115742"
+        },
+        {
+            "name": "prueba1.pdf",
+            "action": "deleted",
+            "timestamp": "2026-05-27T20:41:43.987828"
+        },
+        {
+            "name": "ejercicio positivo o negativo.cpp",
+            "action": "deleted",
+            "timestamp": "2026-05-27T20:43:06.511666"
+        },
+        {
+            "name": "Ejemplos Diodo de Uni\u00f3n.pdf",
+            "action": "deleted",
+            "timestamp": "2026-05-27T20:44:25.362849"
         }
     ],
     "trash": [
-        {
-            "name": "comparaci\u00f3n 3 num.cpp",
-            "item_type": "file",
-            "original_path": "root/videos/comparaci\u00f3n 3 num.cpp",
-            "size": 0,
-            "deleted_at": "2026-05-26T19:01:19.280698",
-            "is_expired": false
-        },
         {
             "name": "prueba 2.psc",
             "item_type": "file",
@@ -169,8 +254,80 @@
             "name": "images (1).jpeg",
             "item_type": "file",
             "original_path": "root/images (1).jpeg",
-            "size": 43460,
+            "size": 0,
             "deleted_at": "2026-05-27T19:15:58.329593",
+            "is_expired": false
+        },
+        {
+            "name": "Captura de pantalla 2026-05-27 183024.png",
+            "item_type": "file",
+            "original_path": "root/Captura de pantalla 2026-05-27 183024.png",
+            "size": 0,
+            "deleted_at": "2026-05-27T20:42:42.730687",
+            "is_expired": false
+        },
+        {
+            "name": "Captura de pantalla 2026-05-27 183024.png",
+            "item_type": "file",
+            "original_path": "root/Captura de pantalla 2026-05-27 183024.png",
+            "size": 0,
+            "deleted_at": "2026-05-27T20:44:09.561146",
+            "is_expired": false
+        },
+        {
+            "name": "Captura de pantalla 2026-05-27 183024.png",
+            "item_type": "file",
+            "original_path": "root/documentos/Captura de pantalla 2026-05-27 183024.png",
+            "size": 0,
+            "deleted_at": "2026-05-27T20:44:09.561148",
+            "is_expired": false
+        },
+        {
+            "name": "Captura de pantalla 2026-05-27 183024.png",
+            "item_type": "file",
+            "original_path": "root/documentos/Captura de pantalla 2026-05-27 183024.png",
+            "size": 0,
+            "deleted_at": "2026-05-27T20:44:09.561150",
+            "is_expired": false
+        },
+        {
+            "name": "cofi.png",
+            "item_type": "file",
+            "original_path": "root/documentos/cofi.png",
+            "size": 0,
+            "deleted_at": "2026-05-27T20:23:26.714236",
+            "is_expired": false
+        },
+        {
+            "name": "Captura de pantalla 2026-05-26 193553.png",
+            "item_type": "file",
+            "original_path": "root/Captura de pantalla 2026-05-26 193553.png",
+            "size": 0,
+            "deleted_at": "2026-05-27T20:39:10.445572",
+            "is_expired": false
+        },
+        {
+            "name": "prueba1.pdf",
+            "item_type": "file",
+            "original_path": "root/prueba1.pdf",
+            "size": 0,
+            "deleted_at": "2026-05-27T20:41:43.987808",
+            "is_expired": false
+        },
+        {
+            "name": "ejercicio positivo o negativo.cpp",
+            "item_type": "file",
+            "original_path": "root/ejercicio positivo o negativo.cpp",
+            "size": 0,
+            "deleted_at": "2026-05-27T20:43:06.511654",
+            "is_expired": false
+        },
+        {
+            "name": "Ejemplos Diodo de Uni\u00f3n.pdf",
+            "item_type": "file",
+            "original_path": "root/documentos/Ejemplos Diodo de Uni\u00f3n.pdf",
+            "size": 3780954,
+            "deleted_at": "2026-05-27T20:44:25.362835",
             "is_expired": false
         }
     ]

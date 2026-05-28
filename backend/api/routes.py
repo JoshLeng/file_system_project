@@ -536,48 +536,43 @@ def get_trash():
 def restore_from_trash(data: dict):
     name = data["name"]
     
-    # Obtener el item de la papelera
     item = trash.restore(name)
     
     if not item:
         return {"error": "Item not found in trash"}
     
-    # Obtener el directorio padre desde original_path
     original_path = item.original_path
     if not original_path:
         return {"error": "Original path not found"}
     
-    # Extraer el directorio padre (quitar el nombre del archivo/carpeta)
     path_parts = original_path.split('/')
     parent_path = '/'.join(path_parts[:-1]) if len(path_parts) > 1 else "root"
     
     parent_directory = fs.get_directory_by_path(parent_path)
     
-    # Si el directorio padre no existe, usar root
     if not parent_directory:
         parent_directory = fs.root
     
-    # Recrear el archivo o carpeta
     if item.item_type == "file":
-        # Verificar si el archivo ya existe
         existing_file = next((f for f in parent_directory.files if f.name == item.name), None)
         if not existing_file:
-            new_file = fs.create_file(parent_directory, item.name, tags=[])
-            # Si había tamaño guardado, asignarlo
-            if hasattr(item, 'size') and item.size:
-                new_file.size = item.size
+            fs.create_file(parent_directory, item.name, tags=[])
     else:
-        # Verificar si la carpeta ya existe
         existing_dir = next((d for d in parent_directory.subdirectories if d.name == item.name), None)
         if not existing_dir:
             fs.create_directory(parent_directory, item.name)
     
     fs.save()
     
+    # Agregar a recientes
+    fs.add_recent(item.name, "restored")
+    fs.save()
+    
     return {
         "success": True,
         "message": f"Item '{name}' restored successfully",
-        "item": item.to_dict()
+        "item": item.to_dict(),
+        "restored_path": parent_path
     }
 #######################################################
 
@@ -808,6 +803,14 @@ def get_shared_file(hash_id: str):
     redirect_url = f"/frontend/index.html?path={directory_path}&highlight={file_name}"
     
     return RedirectResponse(url=redirect_url)
+@router.post("/add-recent")
+def add_recent(data: dict):
+    name = data.get("name")
+    action = data.get("action")
+    fs.add_recent(name, action)
+    fs.save()
+    return {"success": True}
+
 @router.get("/share-links")
 def get_all_share_links():
     """Obtener todos los enlaces compartidos (solo admin)"""

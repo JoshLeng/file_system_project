@@ -17,7 +17,7 @@ class FileSystem:
         self.recent_stack = []
 
         # límite visual
-        self.max_recent = 10
+        self.max_recent = 20
         
         self.trash = TrashSystem()
         self.share_links = {}  # Diccionario (tabla hash): hash -> info del archivo
@@ -230,13 +230,19 @@ class FileSystem:
     ####################################################
     
     def get_recent_files_only(self):
-        """Filtra solo acciones relacionadas con archivos (para la tarjeta Recientes)"""
-        file_actions = ["file_created", "uploaded", "renamed"]
-        recent_files = [
-            item for item in self.recent_stack 
-            if item["action"] in file_actions
-        ]
-        return list(reversed(recent_files[:5]))
+        """Solo muestra archivos que NO han sido eliminados"""
+        # Acciones que NO son eliminación
+        allowed_actions = ["file_created", "uploaded", "renamed", "restored"]
+        
+        # Obtener nombres de archivos que están en la papelera
+        deleted_names = [item.name for item in self.trash.items]
+        
+        recent_files = []
+        for item in self.recent_stack:
+            if item["action"] in allowed_actions and item["name"] not in deleted_names:
+                recent_files.append(item)
+        
+        return list(reversed(recent_files))
     
     ####################################################
     
